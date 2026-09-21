@@ -1,0 +1,272 @@
+{
+	"info": {
+		"_postman_id": "quakeguard-ai-microservices-collection-2026",
+		"name": "QuakeGuard AI - 4 Microservices & API Gateway Collection",
+		"description": "Complete Postman API collection for testing QuakeGuard AI 4 Microservices (user-service:8081, otp-support-service:8082, assessment-service:8083, notification-service:8084) and Central API Gateway Router (api-gateway:8080).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "gatewayUrl",
+			"value": "http://localhost:8080/api",
+			"type": "string"
+		},
+		{
+			"key": "userServiceUrl",
+			"value": "http://localhost:8081/api",
+			"type": "string"
+		},
+		{
+			"key": "otpServiceUrl",
+			"value": "http://localhost:8082/api",
+			"type": "string"
+		},
+		{
+			"key": "assessmentServiceUrl",
+			"value": "http://localhost:8083/api",
+			"type": "string"
+		},
+		{
+			"key": "notificationServiceUrl",
+			"value": "http://localhost:8084/api",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. API Gateway Router (Port 8080 - Central Entry)",
+			"item": [
+				{
+					"name": "Gateway: Staff Login (Authority/Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@disasterguard.org\",\n  \"password\": \"demo123\"\n}"
+						},
+						"url": {
+							"raw": "{{gatewayUrl}}/auth/login",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Routes through Gateway (8080) -> user-service (8081)"
+					}
+				},
+				{
+					"name": "Gateway: Send 6-Digit Email OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"citizen@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{gatewayUrl}}/auth/send-otp",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["auth", "send-otp"]
+						},
+						"description": "Routes through Gateway (8080) -> otp-support-service (8082)"
+					}
+				},
+				{
+					"name": "Gateway: Verify 6-Digit Email OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"citizen@example.com\",\n  \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{gatewayUrl}}/auth/verify-otp",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["auth", "verify-otp"]
+						},
+						"description": "Routes through Gateway (8080) -> otp-support-service (8082)"
+					}
+				},
+				{
+					"name": "Gateway: Get All Building Assessments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gatewayUrl}}/assessments",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["assessments"]
+						},
+						"description": "Routes through Gateway (8080) -> assessment-service (8083)"
+					}
+				},
+				{
+					"name": "Gateway: Get Targeted Notifications",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gatewayUrl}}/notifications?userId=2&role=ENGINEER",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["notifications"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "2"
+								},
+								{
+									"key": "role",
+									"value": "ENGINEER"
+								}
+							]
+						},
+						"description": "Routes through Gateway (8080) -> notification-service (8084)"
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Direct User Service (Port 8081)",
+			"item": [
+				{
+					"name": "Direct: Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{userServiceUrl}}/users",
+							"host": ["{{userServiceUrl}}"],
+							"path": ["users"]
+						}
+					}
+				},
+				{
+					"name": "Direct: Create User (Authority)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"Suresh Kumar\",\n  \"email\": \"suresh@disasterguard.org\",\n  \"phone\": \"+91 98765 43210\",\n  \"role\": \"ENGINEER\",\n  \"designation\": \"Seismic Auditor\",\n  \"zone\": \"Zone A\"\n}"
+						},
+						"url": {
+							"raw": "{{userServiceUrl}}/users",
+							"host": ["{{userServiceUrl}}"],
+							"path": ["users"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Direct OTP & Support Service (Port 8082)",
+			"item": [
+				{
+					"name": "Direct: Submit Support Ticket (Need Help)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Vimal R\",\n  \"email\": \"vimal@example.com\",\n  \"phone\": \"+91 98765 43210\",\n  \"message\": \"Need assistance updating inspector profile credentials.\"\n}"
+						},
+						"url": {
+							"raw": "{{otpServiceUrl}}/auth/support-ticket",
+							"host": ["{{otpServiceUrl}}"],
+							"path": ["auth", "support-ticket"]
+						}
+					}
+				},
+				{
+					"name": "Direct: Get All Support Tickets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{otpServiceUrl}}/support-tickets",
+							"host": ["{{otpServiceUrl}}"],
+							"path": ["support-tickets"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Direct Assessment Service (Port 8083)",
+			"item": [
+				{
+					"name": "Direct: Submit Engineer Review (Dual Verification)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"engineerDecision\": \"APPROVE\",\n  \"severity\": \"DESTROYED\",\n  \"engineerRecommendation\": \"Immediate Evacuation & Demolition\",\n  \"engineerRemarks\": \"On-site inspection confirmed 97% structural failure.\",\n  \"reviewedBy\": \"Swetha S\",\n  \"reviewDate\": \"12 Aug 2026, 10:15 AM\"\n}"
+						},
+						"url": {
+							"raw": "{{assessmentServiceUrl}}/assessments/1/review",
+							"host": ["{{assessmentServiceUrl}}"],
+							"path": ["assessments", "1", "review"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Direct Notification Service (Port 8084)",
+			"item": [
+				{
+					"name": "Direct: Create Notification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"critical\",\n  \"title\": \"Building B-042 Emergency Signoff Complete\",\n  \"meta\": \"12 Aug 2026, 10:30 AM | Command Center\",\n  \"targetRole\": \"AUTHORITY\"\n}"
+						},
+						"url": {
+							"raw": "{{notificationServiceUrl}}/notifications",
+							"host": ["{{notificationServiceUrl}}"],
+							"path": ["notifications"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

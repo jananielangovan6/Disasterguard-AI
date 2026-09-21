@@ -1,0 +1,475 @@
+{
+	"info": {
+		"_postman_id": "quakeguard-ai-api-collection-2026",
+		"name": "QuakeGuard AI - REST API Collection",
+		"description": "Complete Postman API collection for testing QuakeGuard AI Spring Boot Database Backend endpoints including Auth, User Management, Citizen OTP Verification, Building Assessments with Dual AI+Human Verification, Notifications, and Support Tickets.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Authentication & Security",
+			"item": [
+				{
+					"name": "Staff Login (Authority / Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@disasterguard.org\",\n  \"password\": \"demo123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Logs in Authority/Admin user. Pre-seeded: admin@disasterguard.org / demo123"
+					}
+				},
+				{
+					"name": "Engineer Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"swetha@disasterguard.org\",\n  \"password\": \"demo123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Logs in Engineer user. Pre-seeded: swetha@disasterguard.org / demo123"
+					}
+				},
+				{
+					"name": "Check User Role By Email",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/check-role?email=admin@disasterguard.org",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "check-role"],
+							"query": [
+								{
+									"key": "email",
+									"value": "admin@disasterguard.org"
+								}
+							]
+						},
+						"description": "Dynamically detects role associated with email."
+					}
+				},
+				{
+					"name": "Send 6-Digit Email OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"citizen@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/send-otp",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "send-otp"]
+						},
+						"description": "Generates 6-digit OTP code for email verification."
+					}
+				},
+				{
+					"name": "Verify 6-Digit Email OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"citizen@example.com\",\n  \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/verify-otp",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "verify-otp"]
+						},
+						"description": "Verifies 6-digit OTP code."
+					}
+				},
+				{
+					"name": "Citizen Signup",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"Arun Kumar\",\n  \"email\": \"arun.citizen@example.com\",\n  \"phone\": \"+91 98401 23456\",\n  \"district\": \"Chennai\",\n  \"password\": \"citizen123\",\n  \"role\": \"CITIZEN\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/signup",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "signup"]
+						},
+						"description": "Registers new citizen account."
+					}
+				},
+				{
+					"name": "Submit Login Support Ticket (Need Help)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Karthik V\",\n  \"email\": \"karthik.support@example.com\",\n  \"phone\": \"+91 98765 43210\",\n  \"message\": \"Need assistance resetting my password for Field Inspector access.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/support-ticket",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "support-ticket"]
+						},
+						"description": "Submits support ticket from Need Help modal."
+					}
+				},
+				{
+					"name": "Get Admin Contacts List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/admin-contacts",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "admin-contacts"]
+						},
+						"description": "Retrieves real authority contact cards."
+					}
+				}
+			]
+		},
+		{
+			"name": "2. User Management (Authority)",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["users"]
+						},
+						"description": "Returns all users in the database."
+					}
+				},
+				{
+					"name": "Create New User (Authority)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"Ramesh Kumar\",\n  \"email\": \"ramesh@quakeguard.org\",\n  \"phone\": \"+91 98765 43210\",\n  \"role\": \"ENGINEER\",\n  \"designation\": \"Structural Auditor\",\n  \"qualification\": \"B.E Civil\",\n  \"experience\": \"6\",\n  \"zone\": \"Zone B\",\n  \"specialization\": \"Concrete Safety\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["users"]
+						},
+						"description": "Authority creates a new user account saved permanently into database."
+					}
+				},
+				{
+					"name": "Update User Details",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"Ramesh Kumar\",\n  \"phone\": \"+91 98765 43210\",\n  \"designation\": \"Lead Structural Auditor\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "1"]
+						},
+						"description": "Updates existing user details."
+					}
+				},
+				{
+					"name": "Update User Status (Activate/Deactivate)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"INACTIVE\",\n  \"reason\": \"Field reassignment\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "1", "status"]
+						},
+						"description": "Activates or deactivates user account."
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/99",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "99"]
+						},
+						"description": "Removes user from database."
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Building Assessments & Dual Verification",
+			"item": [
+				{
+					"name": "Get All Building Assessments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/assessments",
+							"host": ["{{baseUrl}}"],
+							"path": ["assessments"]
+						},
+						"description": "Gets all building assessments from database."
+					}
+				},
+				{
+					"name": "Create Building Assessment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"buildingCode\": \"B-099\",\n  \"buildingName\": \"Anna Nagar Tower Block\",\n  \"zone\": \"Zone A\",\n  \"severity\": \"SEVERE\",\n  \"riskScore\": 82.5,\n  \"aiConfidence\": 91.0,\n  \"latitude\": 10.925,\n  \"longitude\": 76.968,\n  \"detectionNotes\": \"Diagonal wall shear cracks observed on 3rd floor.\",\n  \"recommendedAction\": \"Restrict access and inspect\",\n  \"status\": \"PROCESSING\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/assessments",
+							"host": ["{{baseUrl}}"],
+							"path": ["assessments"]
+						},
+						"description": "Creates new building damage report."
+					}
+				},
+				{
+					"name": "Assign Engineer To Assessment",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"engineerId\": 2,\n  \"assignedBy\": \"Rajan K\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/assessments/1/assign",
+							"host": ["{{baseUrl}}"],
+							"path": ["assessments", "1", "assign"]
+						},
+						"description": "Assigns structural engineer to assessment."
+					}
+				},
+				{
+					"name": "Submit Engineer Review (Dual AI + Human Verification)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"engineerDecision\": \"OVERRIDE\",\n  \"severity\": \"MODERATE\",\n  \"engineerRecommendation\": \"Minor Structural Reinforcement Required\",\n  \"engineerRemarks\": \"On-site inspection confirmed cracks are non-structural facade spalling.\",\n  \"reviewedBy\": \"Swetha S\",\n  \"reviewDate\": \"12 Aug 2026, 09:35 AM\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/assessments/1/review",
+							"host": ["{{baseUrl}}"],
+							"path": ["assessments", "1", "review"]
+						},
+						"description": "Submits Human Engineer verification sign-off and overrides or approves AI decision."
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Notifications",
+			"item": [
+				{
+					"name": "Get Targeted Notifications For User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/notifications?userId=2&role=ENGINEER",
+							"host": ["{{baseUrl}}"],
+							"path": ["notifications"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "2"
+								},
+								{
+									"key": "role",
+									"value": "ENGINEER"
+								}
+							]
+						},
+						"description": "Retrieves notifications isolated specifically to logged-in user ID and role."
+					}
+				},
+				{
+					"name": "Create Targeted Notification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"critical\",\n  \"title\": \"Building B-042 Emergency Sign-off Required\",\n  \"meta\": \"12 Aug 2026, 09:40 AM | Command Center\",\n  \"targetRole\": \"ENGINEER\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/notifications",
+							"host": ["{{baseUrl}}"],
+							"path": ["notifications"]
+						},
+						"description": "Creates notification in database."
+					}
+				},
+				{
+					"name": "Mark All Notifications As Read",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/notifications/read-all",
+							"host": ["{{baseUrl}}"],
+							"path": ["notifications", "read-all"]
+						},
+						"description": "Marks notifications read."
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Support Tickets",
+			"item": [
+				{
+					"name": "Get All Support Tickets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/support-tickets",
+							"host": ["{{baseUrl}}"],
+							"path": ["support-tickets"]
+						},
+						"description": "Retrieves support tickets submitted via Need Help portal."
+					}
+				},
+				{
+					"name": "Update Ticket Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"RESOLVED\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/support-tickets/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["support-tickets", "1", "status"]
+						},
+						"description": "Updates ticket status."
+					}
+				}
+			]
+		}
+	]
+}

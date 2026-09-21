@@ -1,0 +1,269 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ======================================================
+   GLOBAL
+====================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(16,185,129,.08), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(59,130,246,.06), transparent 35%),
+    #F8FAFC;
+  color: #0F172A;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ======================================================
+   SCROLLBAR
+====================================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* ======================================================
+   SELECTION
+====================================================== */
+
+::selection {
+  background: rgba(16,185,129,.20);
+}
+
+/* ======================================================
+   FOCUS
+====================================================== */
+
+:focus-visible {
+  outline: 2px solid #10B981;
+  outline-offset: 2px;
+}
+
+/* ======================================================
+   ANIMATIONS
+====================================================== */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -250% 0;
+  }
+  100% {
+    background-position: 250% 0;
+  }
+}
+
+@keyframes pulseGlow {
+  0%,100% {
+    box-shadow: 0 0 0 0 rgba(16,185,129,.25);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(16,185,129,0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp .45s ease both;
+}
+
+.animate-fade-in {
+  animation: fadeIn .4s ease both;
+}
+
+.animate-scale-in {
+  animation: scaleIn .35s ease both;
+}
+
+.delay-1 { animation-delay: 70ms; }
+.delay-2 { animation-delay: 140ms; }
+.delay-3 { animation-delay: 210ms; }
+.delay-4 { animation-delay: 280ms; }
+.delay-5 { animation-delay: 350ms; }
+
+/* ======================================================
+   CARDS
+====================================================== */
+
+.bg-panel,
+.bg-card {
+  background: white;
+  border-radius: 20px;
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease,
+    border-color .25s ease,
+    background-color .25s ease;
+}
+
+.bg-panel:hover,
+.bg-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(15,23,42,.08);
+}
+
+.border.border-line {
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 2px 8px rgba(15,23,42,.05);
+}
+
+/* ======================================================
+   BUTTONS
+====================================================== */
+
+button {
+  transition: all .25s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: scale(.98);
+}
+
+.bg-signal {
+  background: #10B981 !important;
+  color: white !important;
+}
+
+.bg-signal:hover {
+  background: #059669 !important;
+  box-shadow: 0 10px 28px rgba(16,185,129,.30);
+}
+
+/* ======================================================
+   SKELETON
+====================================================== */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #E2E8F0 25%,
+    #F8FAFC 40%,
+    #E2E8F0 65%
+  );
+  background-size: 300% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+/* ======================================================
+   PULSE
+====================================================== */
+
+.pulse-dot {
+  animation: pulseGlow 2s infinite;
+}
+
+/* ======================================================
+   HEADINGS
+====================================================== */
+
+h1, h2, h3, h4, h5 {
+  color: #0F172A;
+  letter-spacing: -.02em;
+}
+
+p {
+  color: #64748B;
+}
+
+/* ======================================================
+   GRADIENT TEXT
+====================================================== */
+
+.text-gradient-signal {
+  background: linear-gradient(90deg, #10B981, #3B82F6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ======================================================
+   GLASS PANEL
+====================================================== */
+
+.glass-panel {
+  background: rgba(255,255,255,.70);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226,232,240,.80);
+}
+
+/* ======================================================
+   DIVIDER
+====================================================== */
+
+.fade-divider {
+  height: 1px;
+  border: none;
+  background: linear-gradient(to right, transparent, #CBD5E1, transparent);
+}
