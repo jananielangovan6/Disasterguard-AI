@@ -282,32 +282,6 @@ export default function Notifications() {
               </p>
             </div>
           </div>
- 
-          {/* Mini stat pills inside banner */}
-          {visibleNotifications.length > 0 && (
-            <div className="relative z-10 flex flex-wrap gap-2.5 mt-5">
-              {Object.entries(counts).map(([type, count]) => {
-                const Icon = ICONS[type] || Info;
-                return (
-                  <div
-                    key={type}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur border border-white/20 text-white"
-                  >
-                    <Icon size={12} />
-                    <span className="text-xs font-semibold">{count} {TYPE_LABELS[type] || type}</span>
-                  </div>
-                );
-              })}
-              {authorityCount > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur border border-white/20 text-white">
-                  <Mail size={12} />
-                  <span className="text-xs font-semibold">
-                    {authorityCount} {["authority", "admin", "director", "lead", "hq"].includes(String(user?.sessionRole || user?.role || "").toLowerCase()) ? "HQ Alerts" : "Sent to Authority"}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
         </div>
  
         {/* Filter tabs & Action buttons row */}
