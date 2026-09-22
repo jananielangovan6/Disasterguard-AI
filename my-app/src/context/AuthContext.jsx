@@ -173,13 +173,37 @@ export function AuthProvider({ children }) {
 
     const displayRole = ROLE_DISPLAY_MAP[backendRoleKey] || rawRole;
 
+    const finalRoleKey = backendRoleKey;
+    const finalDisplayRole = displayRole;
+
+    if (localMatch) {
+      const sessionUser = {
+        ...localMatch,
+        id: localMatch.id || "u_" + Date.now(),
+        name: localMatch.name || (cleanEmail.startsWith("admin") ? "Rajan K" : cleanEmail.split("@")[0]),
+        email: localMatch.email || cleanEmail,
+        role: finalRoleKey,
+        sessionRole: finalDisplayRole,
+      };
+
+      localStorage.setItem("token", "token_" + sessionUser.id);
+      setUser(sessionUser);
+      setCurrentUser(sessionUser);
+
+      // Async background sync with API if available
+      api.post("/auth/login", { email: cleanEmail, password }).then((res) => {
+        if (res.data?.token) localStorage.setItem("token", res.data.token);
+      }).catch(() => {});
+
+      return { ok: true, role: finalRoleKey };
+    }
+
     try {
       const response = await api.post("/auth/login", { email: cleanEmail, password });
       const data = response.data;
 
-      // Extract raw role from backend response or local match
-      const rawApiRole = data.role || data.user?.role || localMatch?.role || resolvedRoleStr;
-      const finalRoleKey =
+      const rawApiRole = data.role || data.user?.role || resolvedRoleStr;
+      const apiRoleKey =
         rawApiRole === "Field Inspector" || rawApiRole === "FIELD_INSPECTOR"
           ? "FIELD_INSPECTOR"
           : rawApiRole === "Authority" || rawApiRole === "AUTHORITY" || rawApiRole === "ADMIN"
@@ -190,44 +214,22 @@ export function AuthProvider({ children }) {
           ? "CITIZEN"
           : backendRoleKey;
 
-      const finalDisplayRole = ROLE_DISPLAY_MAP[finalRoleKey] || finalRoleKey;
-
-      const userName = data.fullName || localMatch?.name || (cleanEmail.startsWith("admin") ? "Rajan K" : cleanEmail.split("@")[0]);
+      const apiDisplayRole = ROLE_DISPLAY_MAP[apiRoleKey] || apiRoleKey;
+      const userName = data.fullName || (cleanEmail.startsWith("admin") ? "Rajan K" : cleanEmail.split("@")[0]);
 
       const sessionUser = {
-        ...(localMatch || {}),
-        id: data.userId || localMatch?.id || "u_" + Date.now(),
+        id: data.userId || "u_" + Date.now(),
         name: userName,
-        email: data.email || localMatch?.email || cleanEmail,
-        role: finalRoleKey,
-        sessionRole: finalDisplayRole,
+        email: data.email || cleanEmail,
+        role: apiRoleKey,
+        sessionRole: apiDisplayRole,
       };
 
-      localStorage.setItem("token", data.token || "offline_token");
+      localStorage.setItem("token", data.token || "token_" + sessionUser.id);
       setUser(sessionUser);
       setCurrentUser(sessionUser);
-      return { ok: true, role: finalRoleKey };
+      return { ok: true, role: apiRoleKey };
     } catch {
-      // Fallback if backend API is offline
-      const finalRoleKey = backendRoleKey;
-      const finalDisplayRole = displayRole;
-
-      if (localMatch) {
-        const sessionUser = {
-          ...localMatch,
-          id: localMatch.id || "u_" + Date.now(),
-          name: localMatch.name || (cleanEmail.startsWith("admin") ? "Rajan K" : cleanEmail.split("@")[0]),
-          email: localMatch.email || cleanEmail,
-          role: finalRoleKey,
-          sessionRole: finalDisplayRole,
-        };
-
-        localStorage.setItem("token", "offline_token_" + sessionUser.id);
-        setUser(sessionUser);
-        setCurrentUser(sessionUser);
-        return { ok: true, role: finalRoleKey };
-      }
-
       const sessionUser = {
         id: "u_" + Date.now(),
         name: cleanEmail.startsWith("admin") ? "Rajan K" : cleanEmail.split("@")[0],
@@ -236,7 +238,7 @@ export function AuthProvider({ children }) {
         sessionRole: finalDisplayRole,
       };
 
-      localStorage.setItem("token", "offline_token_" + sessionUser.id);
+      localStorage.setItem("token", "token_" + sessionUser.id);
       setUser(sessionUser);
       setCurrentUser(sessionUser);
       return { ok: true, role: finalRoleKey };
