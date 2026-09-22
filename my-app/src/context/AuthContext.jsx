@@ -31,25 +31,38 @@ export function AuthProvider({ children }) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    const handlePrefix = cleanEmail.split("@")[0].trim();
 
     // 1. Check local stored user database first to guarantee staff role is 100% stable
     const storedUsers = getStoredUsers();
-    const localMatch = storedUsers.find(
-      (u) =>
-        (u.email && u.email.trim().toLowerCase() === cleanEmail) ||
-        (u.officialEmail && u.officialEmail.trim().toLowerCase() === cleanEmail) ||
-        (u.personalEmail && u.personalEmail.trim().toLowerCase() === cleanEmail) ||
-        (u.employeeId && u.employeeId.trim().toLowerCase() === cleanEmail) ||
-        (u.name && u.name.trim().toLowerCase() === cleanEmail)
-    ) || USERS.find(
-      (u) =>
-        (u.email && u.email.trim().toLowerCase() === cleanEmail) ||
-        (u.name && u.name.trim().toLowerCase() === cleanEmail)
-    );
+    const localMatch = storedUsers.find((u) => {
+      const uEmail = (u.email || "").toLowerCase();
+      const uOff = (u.officialEmail || "").toLowerCase();
+      const uPers = (u.personalEmail || "").toLowerCase();
+      const uEmp = (u.employeeId || "").toLowerCase();
+      const uName = (u.name || "").toLowerCase();
+      return (
+        uEmail === cleanEmail || uOff === cleanEmail || uPers === cleanEmail || uEmp === cleanEmail || uName === cleanEmail ||
+        (handlePrefix && handlePrefix.length > 2 && (uEmail.includes(handlePrefix) || uOff.includes(handlePrefix) || uPers.includes(handlePrefix) || uName.includes(handlePrefix)))
+      );
+    }) || USERS.find((u) => {
+      const uEmail = (u.email || "").toLowerCase();
+      const uName = (u.name || "").toLowerCase();
+      return uEmail === cleanEmail || uName === cleanEmail || (handlePrefix && handlePrefix.length > 2 && (uEmail.includes(handlePrefix) || uName.includes(handlePrefix)));
+    });
 
     let resolvedRoleStr = localMatch?.role;
 
     if (!resolvedRoleStr) {
+      const isStaffDomain =
+        cleanEmail.endsWith("@disasterguard.org") ||
+        cleanEmail.endsWith("@disaterguard.org") ||
+        cleanEmail.endsWith("@quakeguard.org") ||
+        cleanEmail.endsWith("@disasterguard.gov") ||
+        cleanEmail.endsWith("@quakeguard.gov") ||
+        cleanEmail.endsWith("@disasterguard.com") ||
+        cleanEmail.endsWith("@quakeguard.com");
+
       if (
         cleanEmail.includes("admin") ||
         cleanEmail.includes("authority") ||
@@ -59,21 +72,25 @@ export function AuthProvider({ children }) {
       ) {
         resolvedRoleStr = "Authority";
       } else if (
+        cleanEmail.includes("janani") ||
+        cleanEmail.includes("dhiyana") ||
+        cleanEmail.includes("inspector") ||
+        cleanEmail.includes("field") ||
+        cleanEmail.startsWith("inspector@")
+      ) {
+        resolvedRoleStr = "Field Inspector";
+      } else if (
         cleanEmail.includes("swetha") ||
         cleanEmail.includes("karthik") ||
         cleanEmail.includes("divya") ||
         cleanEmail.includes("arjun") ||
         cleanEmail.includes("meena") ||
         cleanEmail.includes("sanjay") ||
-        cleanEmail.includes("engineer")
+        cleanEmail.includes("engineer") ||
+        cleanEmail.startsWith("engineer@") ||
+        isStaffDomain
       ) {
         resolvedRoleStr = "Engineer";
-      } else if (
-        cleanEmail.includes("janani") ||
-        cleanEmail.includes("dhiyana") ||
-        cleanEmail.includes("inspector")
-      ) {
-        resolvedRoleStr = "Field Inspector";
       } else {
         const citizenMatch = findCitizenByEmail(cleanEmail) || getCitizens().find((c) => c.email?.toLowerCase() === cleanEmail);
         resolvedRoleStr = citizenMatch ? "Citizen" : (preferredRole || "Engineer");

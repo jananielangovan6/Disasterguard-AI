@@ -98,15 +98,21 @@ export default function Login() {
       return;
     }
 
-    // 2. Check stored Users list for any Authority-created official or personal email address or employeeId
+    // 2. Check stored Users list for any Authority-created staff user (exact or prefix match)
     const staffUsers = getStoredUsers();
-    const staffMatch = staffUsers.find(
-      (u) =>
-        u.email?.toLowerCase() === trimmed ||
-        u.officialEmail?.toLowerCase() === trimmed ||
-        u.personalEmail?.toLowerCase() === trimmed ||
-        u.employeeId?.toLowerCase() === trimmed
-    );
+    const handlePrefix = trimmed.split("@")[0].trim();
+    const staffMatch = staffUsers.find((u) => {
+      const uEmail = (u.email || "").toLowerCase();
+      const uOff = (u.officialEmail || "").toLowerCase();
+      const uPers = (u.personalEmail || "").toLowerCase();
+      const uEmp = (u.employeeId || "").toLowerCase();
+      const uName = (u.name || "").toLowerCase();
+      return (
+        uEmail === trimmed || uOff === trimmed || uPers === trimmed || uEmp === trimmed ||
+        (handlePrefix && handlePrefix.length > 2 && (uEmail.includes(handlePrefix) || uOff.includes(handlePrefix) || uPers.includes(handlePrefix) || uName.includes(handlePrefix)))
+      );
+    });
+
     if (staffMatch) {
       const roleName =
         staffMatch.role === "ADMIN" || staffMatch.role === "AUTHORITY" || staffMatch.role === "Authority"
@@ -130,7 +136,16 @@ export default function Login() {
       return;
     }
 
-    // 4. Robust keyword & pattern matching on email address (catches admin, swetha, janani, etc.)
+    // 4. Check official staff domains (@disasterguard.org, @disaterguard.org, @quakeguard.org, etc.)
+    const isStaffDomain =
+      trimmed.endsWith("@disasterguard.org") ||
+      trimmed.endsWith("@disaterguard.org") ||
+      trimmed.endsWith("@quakeguard.org") ||
+      trimmed.endsWith("@disasterguard.gov") ||
+      trimmed.endsWith("@quakeguard.gov") ||
+      trimmed.endsWith("@disasterguard.com") ||
+      trimmed.endsWith("@quakeguard.com");
+
     if (
       trimmed.includes("admin") ||
       trimmed.includes("authority") ||
@@ -140,16 +155,6 @@ export default function Login() {
     ) {
       setDisplayRole("Authority");
     } else if (
-      trimmed.includes("swetha") ||
-      trimmed.includes("karthik") ||
-      trimmed.includes("divya") ||
-      trimmed.includes("arjun") ||
-      trimmed.includes("meena") ||
-      trimmed.includes("engineer") ||
-      trimmed.startsWith("engineer@")
-    ) {
-      setDisplayRole("Engineer");
-    } else if (
       trimmed.includes("janani") ||
       trimmed.includes("dhiyana") ||
       trimmed.includes("inspector") ||
@@ -157,8 +162,19 @@ export default function Login() {
       trimmed.startsWith("inspector@")
     ) {
       setDisplayRole("Field Inspector");
+    } else if (
+      trimmed.includes("swetha") ||
+      trimmed.includes("karthik") ||
+      trimmed.includes("divya") ||
+      trimmed.includes("arjun") ||
+      trimmed.includes("meena") ||
+      trimmed.includes("engineer") ||
+      trimmed.startsWith("engineer@") ||
+      isStaffDomain
+    ) {
+      setDisplayRole("Engineer");
     } else {
-      // ANY OTHER EMAIL AUTOMATICALLY DETECTS AS PUBLIC
+      // ANY OTHER PUBLIC EMAIL AUTOMATICALLY DETECTS AS PUBLIC
       setDisplayRole("Public");
     }
   }, [email]);
