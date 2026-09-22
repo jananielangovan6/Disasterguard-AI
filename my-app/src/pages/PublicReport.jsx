@@ -104,6 +104,7 @@ export default function PublicReport() {
     const cleanEmail = email.trim().toLowerCase();
     let code = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(code);
+    sessionStorage.setItem("qg_login_otp", code);
 
     await sendRealOtpEmail(cleanEmail, code);
 
@@ -146,13 +147,14 @@ export default function PublicReport() {
     } catch {}
 
     // 2. Fallback client-side code match
-    if (!isOtpValid && generatedOtp && cleanCode === generatedOtp.trim()) {
+    const expectedOtp = (generatedOtp || sessionStorage.getItem("qg_login_otp") || "").trim();
+    if (!isOtpValid && expectedOtp && cleanCode === expectedOtp) {
       isOtpValid = true;
     }
 
     if (!isOtpValid) {
       setOtpVerifying(false);
-      setOtpError("❌ Incorrect OTP code! Please enter the exact 6-digit code received in your email.");
+      setOtpError("❌ Incorrect OTP code! Please check your email (sent from disasterguard26@gmail.com) and enter the exact received code.");
       return;
     }
 

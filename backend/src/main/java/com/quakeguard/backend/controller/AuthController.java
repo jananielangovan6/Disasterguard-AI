@@ -75,7 +75,12 @@ public class AuthController {
         }
 
         String targetEmail = email.trim().toLowerCase();
-        String otp = String.format("%06d", new Random().nextInt(1000000));
+        String otp = body.get("otp");
+        if (otp == null || otp.trim().isBlank()) {
+            otp = String.format("%06d", new Random().nextInt(1000000));
+        } else {
+            otp = otp.trim();
+        }
         OtpVerification verification = new OtpVerification(targetEmail, otp, LocalDateTime.now().plusMinutes(10));
         otpRepository.save(verification);
 
