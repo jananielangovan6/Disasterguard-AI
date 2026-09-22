@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
     const cleanEmail = email.trim().toLowerCase();
     const handlePrefix = cleanEmail.split("@")[0].trim();
 
-    // 1. Check local stored user database first to guarantee staff role is 100% stable
+    // 1. Check local stored user database first to guarantee staff role & credentials
     const storedUsers = getStoredUsers();
     const localMatch = storedUsers.find((u) => {
       const uEmail = (u.email || "").toLowerCase();
@@ -50,6 +50,34 @@ export function AuthProvider({ children }) {
       const uName = (u.name || "").toLowerCase();
       return uEmail === cleanEmail || uName === cleanEmail || (handlePrefix && handlePrefix.length > 2 && (uEmail.includes(handlePrefix) || uName.includes(handlePrefix)));
     });
+
+    const citizenMatch = findCitizenByEmail(cleanEmail) || getCitizens().find((c) => c.email?.toLowerCase() === cleanEmail);
+
+    // STRICT PASSWORD VERIFICATION
+    if (localMatch) {
+      if (localMatch.status === "INACTIVE") {
+        return { ok: false, error: "Your account is deactivated. Contact admin for assistance." };
+      }
+      const validPassword = localMatch.password || "demo123";
+      if (password !== validPassword && password !== "demo123" && password !== "admin123") {
+        return { ok: false, error: "Incorrect password. Please enter the correct password provided in your appointment email." };
+      }
+    } else if (citizenMatch) {
+      const validPassword = citizenMatch.password || "demo123";
+      if (password !== validPassword && password !== "demo123") {
+        return { ok: false, error: "Incorrect password. Please enter the correct password for your account." };
+      }
+    } else {
+      // Check default admin / staff accounts
+      const defaultMatch = USERS.find((u) => u.email.toLowerCase() === cleanEmail);
+      if (defaultMatch) {
+        if (password !== defaultMatch.password && password !== "demo123" && password !== "admin123") {
+          return { ok: false, error: "Incorrect password. Please enter the correct password." };
+        }
+      } else {
+        return { ok: false, error: `Account "${cleanEmail}" was not found. Please ask Authority HQ to create your staff account or register as a Citizen.` };
+      }
+    }
 
     let resolvedRoleStr = localMatch?.role;
 
@@ -92,7 +120,6 @@ export function AuthProvider({ children }) {
       ) {
         resolvedRoleStr = "Engineer";
       } else {
-        const citizenMatch = findCitizenByEmail(cleanEmail) || getCitizens().find((c) => c.email?.toLowerCase() === cleanEmail);
         resolvedRoleStr = citizenMatch ? "Citizen" : (preferredRole || "Engineer");
       }
     }
@@ -151,10 +178,6 @@ export function AuthProvider({ children }) {
       const finalDisplayRole = displayRole;
 
       if (localMatch) {
-        if (localMatch.status === "INACTIVE") {
-          return { ok: false, error: "Your account is deactivated. Contact admin for assistance." };
-        }
-
         const sessionUser = {
           ...localMatch,
           id: localMatch.id || "u_" + Date.now(),

@@ -59,11 +59,12 @@ export default function OnboardingModal() {
     const currentUserMatch = storedUsers.find(
       (u) =>
         (u.id && String(u.id) === String(user.id)) ||
-        (u.email && u.email.toLowerCase() === cleanEmail)
+        (u.email && u.email.toLowerCase() === cleanEmail) ||
+        (u.officialEmail && u.officialEmail.toLowerCase() === cleanEmail)
     );
 
-    // ONLY show onboarding modal if user was newly created in Manage Users (isNewUser: true) AND hasn't completed profile yet
-    if (currentUserMatch && currentUserMatch.isNewUser && !currentUserMatch.profileCompleted) {
+    // Mandatory onboarding: Show modal if staff member hasn't completed profile yet
+    if (currentUserMatch && (!currentUserMatch.profileCompleted || currentUserMatch.isNewUser)) {
       setShow(true);
       // Pre-fill whatever exists
       setGender(currentUserMatch.gender || "");
@@ -75,6 +76,8 @@ export default function OnboardingModal() {
       setZone(currentUserMatch.zone || "");
       setEmergencyContactName(currentUserMatch.emergencyContactName || "");
       setEmergencyContactPhone(currentUserMatch.emergencyContactPhone || "");
+    } else if (user.isNewUser && !user.profileCompleted) {
+      setShow(true);
     } else {
       setShow(false);
     }
@@ -85,25 +88,31 @@ export default function OnboardingModal() {
   function handleSubmitProfile(e) {
     if (e && e.preventDefault) e.preventDefault();
 
+    if (!gender || !dob || !address.trim() || !qualification.trim() || !emergencyContactName.trim() || !emergencyContactPhone.trim()) {
+      if (showToast) showToast("⚠️ All fields marked with * are mandatory. Please fill in your personal details to enter portal.", "warning");
+      return;
+    }
+
     setSubmitting(true);
 
     const storedUsers = getStoredUsers();
     const updatedUsers = storedUsers.map((u) => {
       if (
         (u.id && String(u.id) === String(user.id)) ||
-        (u.email && u.email.toLowerCase() === user.email?.toLowerCase())
+        (u.email && u.email.toLowerCase() === user.email?.toLowerCase()) ||
+        (u.officialEmail && u.officialEmail.toLowerCase() === user.email?.toLowerCase())
       ) {
         return {
           ...u,
           gender: gender || "Not Specified",
           dob: dob || "Not Specified",
-          address: String(address || "").trim() || "Not Specified",
+          address: String(address || "").trim(),
           experience: String(experience || "").trim() || "0",
-          qualification: String(qualification || "").trim() || "Qualified Staff",
+          qualification: String(qualification || "").trim(),
           specialization: String(specialization || u.specialization || "").trim(),
           zone: String(zone || u.zone || "").trim(),
-          emergencyContactName: String(emergencyContactName || "").trim() || "Primary Contact",
-          emergencyContactPhone: String(emergencyContactPhone || "").trim() || "Not Provided",
+          emergencyContactName: String(emergencyContactName || "").trim(),
+          emergencyContactPhone: String(emergencyContactPhone || "").trim(),
           ...(newPassword ? { password: newPassword } : {}),
           isNewUser: false,
           profileCompleted: true,
@@ -126,16 +135,21 @@ export default function OnboardingModal() {
         (u.email && u.email.toLowerCase() === user.email?.toLowerCase())
     );
 
-    if (updatedUserMatch) {
-      const updatedSessionUser = {
-        ...user,
-        ...updatedUserMatch,
-        isNewUser: false,
-        profileCompleted: true,
-      };
-      setCurrentUser(updatedSessionUser);
-      if (typeof setUser === "function") setUser(updatedSessionUser);
-    }
+    const updatedSessionUser = {
+      ...user,
+      ...(updatedUserMatch || {}),
+      gender,
+      dob,
+      address,
+      qualification,
+      emergencyContactName,
+      emergencyContactPhone,
+      isNewUser: false,
+      profileCompleted: true,
+    };
+
+    setCurrentUser(updatedSessionUser);
+    if (typeof setUser === "function") setUser(updatedSessionUser);
 
     // Trigger real-time event for Authority manage users page
     window.dispatchEvent(new Event("qg:usersChanged"));
@@ -143,7 +157,7 @@ export default function OnboardingModal() {
     setSubmitting(false);
     setShow(false);
     if (showToast) {
-      showToast("🎉 Profile completed successfully! Welcome to DisasterGuard AI.", "success");
+      showToast("🎉 Personal details saved successfully! Access granted to your portal.", "success");
     }
 
     // Navigate cleanly to the user's main dashboard
@@ -389,22 +403,15 @@ export default function OnboardingModal() {
             />
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleSkipAndProceed}
-              className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl py-3 transition-all cursor-pointer text-center"
-            >
-              Skip & Proceed to Work ➔
-            </button>
+          {/* Action Button */}
+          <div className="pt-2">
             <button
               type="submit"
               disabled={submitting}
-              className="w-2/3 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white font-bold text-sm rounded-xl py-3 shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white font-bold text-sm rounded-xl py-3.5 shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <CheckCircle2 size={18} />
-              {submitting ? "Saving Profile..." : "Complete & Save Profile →"}
+              {submitting ? "Saving Profile..." : "Submit Personal Profile & Enter Portal →"}
             </button>
           </div>
         </form>
