@@ -301,7 +301,9 @@ export default function Notifications() {
               {authorityCount > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur border border-white/20 text-white">
                   <Mail size={12} />
-                  <span className="text-xs font-semibold">{authorityCount} Sent to Authority</span>
+                  <span className="text-xs font-semibold">
+                    {authorityCount} {["authority", "admin", "director", "lead", "hq"].includes(String(user?.sessionRole || user?.role || "").toLowerCase()) ? "HQ Alerts" : "Sent to Authority"}
+                  </span>
                 </div>
               )}
             </div>
