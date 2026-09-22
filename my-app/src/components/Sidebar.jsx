@@ -22,7 +22,7 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
-  const { notifications } = useData();
+  const { notifications, buildings } = useData();
   const navigate = useNavigate();
 
   const userRoles = [
