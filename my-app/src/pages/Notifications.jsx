@@ -66,8 +66,12 @@ export function isVisibleToUser(n, user, buildings = []) {
   const rawUserId = userId ? userId.replace(/^u/, "") : null;
   const userFirst = userName ? userName.split(" ")[0] : "";
 
-  // 1. AUTHORITY: Receives ALL notifications across the entire disaster management network
+  // 1. AUTHORITY: Receives HQ notifications, public citizen damage reports & high-priority system alerts
   if (["authority", "admin", "director", "lead", "hq"].includes(lowerRole)) {
+    // Exclude personal citizen updates ("Report Progress Update: Your report...") and engineer assignment notices ("New Public Report Assignment: Authority assigned you...")
+    if (n.title && (n.title.startsWith("Report Progress Update: Your report") || n.title.startsWith("New Public Report Assignment: Authority assigned you"))) {
+      return false;
+    }
     return true;
   }
 
@@ -228,7 +232,7 @@ export default function Notifications() {
       count: counts[type],
     })),
     ...(authorityCount > 0
-      ? [{ key: "authority", label: "Sent to Authority", count: authorityCount, icon: Mail }]
+      ? [{ key: "authority", label: ["authority", "admin", "director", "lead", "hq"].includes(String(user?.sessionRole || user?.role || "").toLowerCase()) ? "HQ Alerts" : "Sent to Authority", count: authorityCount, icon: Mail }]
       : []),
   ];
  

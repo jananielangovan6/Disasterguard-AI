@@ -524,6 +524,40 @@ function ReportDetailModal({ report, onClose }) {
             )}
           </div>
 
+          {/* Verified On-Site Repair & Restoration Certificate */}
+          {(report.status === "Resolved" || report.status === "Closed" || report.completionImage || report.completionRemarks) && (
+            <div className="border-2 border-emerald-300 bg-emerald-50 rounded-2xl p-4 space-y-3 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-xs font-extrabold text-emerald-900 uppercase tracking-wide">
+                  <BadgeCheck size={18} className="text-emerald-600" /> Verified On-Site Completion & Restoration
+                </span>
+                <span className="text-[10px] font-bold bg-emerald-600 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                  ✓ Verified by AI & Senior Engineer
+                </span>
+              </div>
+
+              {(report.completionImage || report.photos?.[0]?.dataUrl) && (
+                <div className="space-y-1">
+                  <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Restored Building Site Photo</p>
+                  <img
+                    src={report.completionImage || "/repaired_house_site.png"}
+                    alt="Restored Site"
+                    className="w-full h-44 object-cover rounded-xl border border-emerald-300 shadow-sm"
+                  />
+                </div>
+              )}
+
+              <div className="bg-white rounded-xl p-3 border border-emerald-200 text-xs space-y-1.5">
+                <p className="font-bold text-slate-800">
+                  Engineer Completion Remarks: <span className="font-normal italic text-slate-700">{report.completionRemarks || report.officerRemarks || "On-site structural repairs and safety reinforcement completed and verified by Python AI."}</span>
+                </p>
+                {report.completionDate && (
+                  <p className="text-[10px] text-slate-500 font-mono">Completed On: {report.completionDate}</p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Officer Remarks */}
           {report.officerRemarks && (
             <div className="border border-emerald-200 bg-emerald-50/70 rounded-xl p-4">

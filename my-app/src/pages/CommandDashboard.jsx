@@ -373,10 +373,19 @@ export default function CommandDashboard() {
                     {badge.label}
                   </span>
 
-                  {isAssigned ? (
-                    <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 text-xs font-semibold text-emerald-800 shadow-sm">
-                      <CheckCircle2 size={16} className="text-emerald-600" />
-                      Assigned to {b.assignedEngineer}
+                  {isAssigned && !editingAssignment[b.id] ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-emerald-800 shadow-sm">
+                        <CheckCircle2 size={16} className="text-emerald-600" />
+                        Assigned to {b.assignedEngineer}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditingAssignment((prev) => ({ ...prev, [b.id]: true }))}
+                        className="text-xs font-bold text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-200 rounded-xl px-3 py-2 transition-all"
+                      >
+                        Reassign
+                      </button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
@@ -387,9 +396,9 @@ export default function CommandDashboard() {
                           engineerSelections[b.id] ? "border-emerald-500 ring-2 ring-emerald-500/20 text-slate-900" : "border-slate-300 text-slate-700"
                         }`}
                       >
-                        <option value="">Select Engineer</option>
+                        <option value="">Select Engineer to {isAssigned ? "Reassign" : "Assign"}</option>
                         {availableEngineers.length === 0 ? (
-                          <option value="" disabled>No Available Engineers (All Assigned)</option>
+                          <option value="" disabled>No Available Engineers (All Busy)</option>
                         ) : (
                           availableEngineers.map((eng) => (
                             <option key={eng.id} value={eng.id}>
@@ -408,8 +417,17 @@ export default function CommandDashboard() {
                             : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
                         }`}
                       >
-                        Assign
+                        {isAssigned ? "Confirm Reassign" : "Assign"}
                       </button>
+                      {editingAssignment[b.id] && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingAssignment((prev) => ({ ...prev, [b.id]: false }))}
+                          className="text-xs font-semibold text-slate-400 hover:text-slate-600 px-2"
+                        >
+                          Cancel
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -701,12 +719,30 @@ export default function CommandDashboard() {
 
               {/* Engineer Assignment Box */}
               <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4">
-                <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                  <Users size={14} className="text-emerald-600" /> Assign Structural Engineer
+                <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5"><Users size={14} className="text-emerald-600" /> Assign / Reassign Structural Engineer</span>
+                  {selectedReport.assignedEngineer && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedReport((prev) => prev ? { ...prev, assignedEngineer: null } : null)}
+                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 underline"
+                    >
+                      Reassign Engineer
+                    </button>
+                  )}
                 </p>
                 {selectedReport.assignedEngineer ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 bg-emerald-100/70 border border-emerald-300 rounded-lg px-3.5 py-2">
-                    <CheckCircle2 size={16} className="text-emerald-600" /> Assigned Engineer: {selectedReport.assignedEngineer}
+                  <div className="flex items-center justify-between gap-2 text-sm font-semibold text-emerald-800 bg-emerald-100/70 border border-emerald-300 rounded-lg px-3.5 py-2">
+                    <span className="flex items-center gap-2">
+                      <CheckCircle2 size={16} className="text-emerald-600" /> Assigned Engineer: {selectedReport.assignedEngineer}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedReport((prev) => prev ? { ...prev, assignedEngineer: null } : null)}
+                      className="text-xs font-bold bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-800 px-2.5 py-1 rounded-md shadow-sm transition-all"
+                    >
+                      Reassign
+                    </button>
                   </div>
                 ) : (
                   <div className="flex flex-col sm:flex-row gap-2">
