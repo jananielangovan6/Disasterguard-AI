@@ -360,7 +360,7 @@ export function AuthProvider({ children }) {
           name: clean.split("@")[0],
           email: clean,
         };
-      } else if (citizen.password && password && citizen.password !== password && password !== "123456" && password !== "demo123") {
+      } else if (citizen.password && password && citizen.password !== password) {
         return { ok: false, error: "Incorrect password. Please check your password and try again." };
       }
 

@@ -102,10 +102,6 @@ public class OtpSupportController {
             return ResponseEntity.ok(Map.of("valid", true, "message", "SMS OTP verified successfully."));
         }
 
-        if ("123456".equals(otp.trim())) {
-            return ResponseEntity.ok(Map.of("valid", true, "message", "Demo OTP verified."));
-        }
-
         return ResponseEntity.status(400).body(Map.of("valid", false, "message", "Incorrect or expired OTP code."));
     }
 

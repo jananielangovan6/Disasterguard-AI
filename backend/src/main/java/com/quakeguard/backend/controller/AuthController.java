@@ -134,10 +134,6 @@ public class AuthController {
             return ResponseEntity.ok(Map.of("valid", true, "message", "OTP code verified successfully."));
         }
 
-        if ("123456".equals(otp.trim())) {
-            return ResponseEntity.ok(Map.of("valid", true, "message", "Demo OTP code verified."));
-        }
-
         return ResponseEntity.status(400).body(Map.of("valid", false, "message", "Incorrect or expired OTP code."));
     }
 
