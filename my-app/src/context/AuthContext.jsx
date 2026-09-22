@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
 
     // 1. Check local stored user database first to guarantee staff role & credentials
     const storedUsers = getStoredUsers();
-    const localMatch = storedUsers.find((u) => {
+    let localMatch = storedUsers.find((u) => {
       const uEmail = (u.email || "").toLowerCase();
       const uOff = (u.officialEmail || "").toLowerCase();
       const uPers = (u.personalEmail || "").toLowerCase();
@@ -52,6 +52,40 @@ export function AuthProvider({ children }) {
     });
 
     const citizenMatch = findCitizenByEmail(cleanEmail) || getCitizens().find((c) => c.email?.toLowerCase() === cleanEmail);
+
+    const isStaffDomain =
+      cleanEmail.endsWith("@disasterguard.org") ||
+      cleanEmail.endsWith("@disaterguard.org") ||
+      cleanEmail.endsWith("@quakeguard.org") ||
+      cleanEmail.endsWith("@disasterguard.gov") ||
+      cleanEmail.endsWith("@quakeguard.gov") ||
+      cleanEmail.endsWith("@disasterguard.com") ||
+      cleanEmail.endsWith("@quakeguard.com");
+
+    // Auto-provision staff member if official domain or staff email is used but not cached yet in localStorage
+    if (!localMatch && !citizenMatch && (isStaffDomain || cleanEmail.includes("disasterguard") || cleanEmail.includes("quakeguard"))) {
+      if (password !== "demo123" && password !== "admin123") {
+        return { ok: false, error: "Incorrect password. Please enter the default password (demo123) provided in your onboarding email." };
+      }
+      let autoRole = "Engineer";
+      if (cleanEmail.includes("admin") || cleanEmail.includes("authority") || cleanEmail.includes("hq")) autoRole = "Authority";
+      else if (cleanEmail.includes("inspector") || cleanEmail.includes("field") || cleanEmail.includes("janani") || cleanEmail.includes("dhiyana")) autoRole = "Field Inspector";
+
+      const formattedName = handlePrefix.charAt(0).toUpperCase() + handlePrefix.slice(1);
+      localMatch = {
+        id: "u_" + Date.now(),
+        name: formattedName,
+        email: cleanEmail,
+        officialEmail: cleanEmail,
+        role: autoRole,
+        status: "ACTIVE",
+        password: password || "demo123",
+        employeeId: "DG-" + Math.floor(100 + Math.random() * 900),
+        isNewUser: true,
+        profileCompleted: false,
+      };
+      saveStoredUsers([localMatch, ...storedUsers]);
+    }
 
     // STRICT PASSWORD VERIFICATION
     if (localMatch) {
@@ -74,6 +108,7 @@ export function AuthProvider({ children }) {
         if (password !== defaultMatch.password && password !== "demo123" && password !== "admin123") {
           return { ok: false, error: "Incorrect password. Please enter the correct password." };
         }
+        localMatch = defaultMatch;
       } else {
         return { ok: false, error: `Account "${cleanEmail}" was not found. Please ask Authority HQ to create your staff account or register as a Citizen.` };
       }
