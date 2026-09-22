@@ -59,7 +59,7 @@ export default function Sidebar() {
 
   const userUnreadCount = notifications.filter((n) => {
     if (n.read) return false;
-    return isVisibleToUser(n, user);
+    return isVisibleToUser(n, user, buildings);
   }).length;
 
   function handleLogout() {
