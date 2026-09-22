@@ -243,20 +243,43 @@ export default function Login() {
     setForgotStep("sending");
 
     let code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(code);
 
-    // 1. Call Spring Boot Backend /api/auth/send-otp (Sends Real Gmail via JavaMailSender from disasterguard26@gmail.com)
+    const subject = `DisasterGuard AI — Password Reset OTP: ${code}`;
+    const bodyText = `Dear User,\n\nYour 6-digit Password Reset OTP Code for DisasterGuard AI is: ${code}\n\nPlease enter this code to reset your password.\n\nFrom: disasterguard26@gmail.com`;
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+        <div style="background: linear-gradient(135deg, #059669, #2563eb); padding: 20px; border-radius: 12px; text-align: center; color: #ffffff;">
+          <h2 style="margin: 0; font-size: 22px;">DisasterGuard AI</h2>
+          <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Password Reset Verification</p>
+        </div>
+        <div style="padding: 24px 0; text-align: center;">
+          <p style="font-size: 14px; color: #475569; margin-bottom: 12px;">Your 6-digit Password Reset OTP Code is:</p>
+          <div style="display: inline-block; background-color: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 12px 28px; font-size: 32px; font-family: monospace; font-weight: bold; letter-spacing: 6px; color: #047857;">
+            ${code}
+          </div>
+          <p style="font-size: 12px; color: #64748b; margin-top: 16px;">This OTP code is valid for 10 minutes. Sent to ${cleanForgotEmail}.</p>
+        </div>
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+          Sent automatically by <strong>DisasterGuard AI</strong> (<code>disasterguard26@gmail.com</code>)
+        </div>
+      </div>
+    `;
+
     try {
-      const response = await fetch("http://localhost:8081/api/auth/send-otp", {
+      await fetch("http://localhost:5000/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanForgotEmail })
+        body: JSON.stringify({ to: cleanForgotEmail, subject, body: bodyText, html: htmlBody })
       });
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.otp) {
-          code = data.otp;
-        }
-      }
+    } catch {}
+
+    try {
+      await fetch("http://localhost:8081/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanForgotEmail, otp: code })
+      });
     } catch {}
 
     setForgotStep("otp");
@@ -272,7 +295,28 @@ export default function Login() {
       setForgotError("Enter the full 6-digit verification code.");
       return;
     }
-    if (!expectedOtp || cleanOtp !== expectedOtp) {
+
+    let isOtpValid = false;
+
+    try {
+      const response = await fetch("http://localhost:8081/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail.trim().toLowerCase(), otp: cleanOtp })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.valid) {
+          isOtpValid = true;
+        }
+      }
+    } catch {}
+
+    if (!isOtpValid && expectedOtp && cleanOtp === expectedOtp) {
+      isOtpValid = true;
+    }
+
+    if (!isOtpValid) {
       setForgotError("❌ Incorrect verification code! Please enter the exact 6-digit code sent to your email.");
       return;
     }

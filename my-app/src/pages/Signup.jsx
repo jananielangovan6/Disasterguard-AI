@@ -56,6 +56,45 @@ export default function Signup() {
     return "";
   }
 
+  const sendRealOtpEmail = async (targetEmail, otpCode) => {
+    const subject = `DisasterGuard AI — Citizen Registration Verification OTP: ${otpCode}`;
+    const bodyText = `Dear Citizen,\n\nYour 6-digit Account Registration OTP Code for DisasterGuard AI is: ${otpCode}\n\nPlease enter this 6-digit code on the screen to verify your email and complete registration.\n\nFrom: disasterguard26@gmail.com`;
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+        <div style="background: linear-gradient(135deg, #059669, #2563eb); padding: 20px; border-radius: 12px; text-align: center; color: #ffffff;">
+          <h2 style="margin: 0; font-size: 22px;">DisasterGuard AI</h2>
+          <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Citizen Registration Verification</p>
+        </div>
+        <div style="padding: 24px 0; text-align: center;">
+          <p style="font-size: 14px; color: #475569; margin-bottom: 12px;">Your 6-digit Registration Verification OTP Code is:</p>
+          <div style="display: inline-block; background-color: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 12px 28px; font-size: 32px; font-family: monospace; font-weight: bold; letter-spacing: 6px; color: #047857;">
+            ${otpCode}
+          </div>
+          <p style="font-size: 12px; color: #64748b; margin-top: 16px;">This OTP code is valid for 10 minutes. Sent to ${targetEmail}.</p>
+        </div>
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+          Sent automatically by <strong>DisasterGuard AI</strong> (<code>disasterguard26@gmail.com</code>)
+        </div>
+      </div>
+    `;
+
+    try {
+      await fetch("http://localhost:5000/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: targetEmail, subject, body: bodyText, html: htmlBody })
+      });
+    } catch {}
+
+    try {
+      await fetch("http://localhost:8081/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: targetEmail, otp: otpCode })
+      });
+    } catch {}
+  };
+
   async function handleStartSignup(e) {
     e.preventDefault();
     setError("");
@@ -71,28 +110,13 @@ export default function Signup() {
     const citizenEmail = email.trim().toLowerCase();
     let code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    try {
-      // 1. Call Spring Boot Backend /api/auth/send-otp
-      const response = await fetch("http://localhost:8081/api/auth/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: citizenEmail })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.otp) {
-          code = data.otp;
-        }
-      }
-    } catch (err) {
-      console.warn("Backend send-otp offline, using fallback OTP", err);
-    }
-
-    // Set state synchronously before opening modal
+    // Set state synchronously before sending and opening modal
     setGeneratedOtp(code);
     sessionStorage.setItem("qg_reg_otp", code);
     window.qg_reg_otp = code;
+
+    await sendRealOtpEmail(citizenEmail, code);
+
     setOtpCode("");
     setOtpError("");
     setSubmitting(false);
