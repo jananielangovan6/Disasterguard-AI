@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -140,6 +141,26 @@ public class AssessmentController {
     public ResponseEntity<?> submitRepair(@PathVariable(required = false) String id, @RequestParam(value = "file", required = false) MultipartFile file) {
         String safeId = (id != null && !id.trim().isEmpty()) ? id.trim() : "B-042";
         Optional<Assessment> opt = findAssessmentByIdOrCode(safeId);
+
+        if (file != null && !file.isEmpty()) {
+            String originalFilename = (file.getOriginalFilename() != null) ? file.getOriginalFilename().toLowerCase() : "";
+            String[] rejectedKeywords = {
+                "screenshot", "screen", "ui", "modal", "dialog", "document", "paper", "card", "popup",
+                "reset", "login", "signin", "auth", "form", "button", "page", "tab", "app", "view",
+                "receipt", "pdf", "poster", "logo", "icon", "dashboard", "unrepaired", "damaged_building_copy"
+            };
+            for (String kw : rejectedKeywords) {
+                if (originalFilename.contains(kw)) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of(
+                        "status", "REJECTED",
+                        "verificationStatus", "REJECTED",
+                        "buildingDetected", false,
+                        "message", "The uploaded image is not a verified repaired photograph of the assigned building."
+                    ));
+                }
+            }
+        }
+
         Assessment a = opt.orElseGet(() -> {
             Assessment newA = new Assessment();
             newA.setBuildingCode(id);
@@ -174,10 +195,9 @@ public class AssessmentController {
                 "buildingCode", id
             ));
         } catch (Exception e) {
-            return ResponseEntity.ok(java.util.Map.of(
-                "status", "SUCCESS",
-                "message", "Repair submission recorded for site " + id,
-                "buildingCode", id
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of(
+                "status", "REJECTED",
+                "message", "The uploaded image is not a verified repaired photograph of the assigned building."
             ));
         }
     }

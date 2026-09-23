@@ -47,11 +47,84 @@ def _get_model():
             ])
     return _MODEL, _TRANSFORM
 
-def detect_building(image_bytes: bytes) -> dict:
+def detect_ui_or_screenshot(image_bytes: bytes, filename: str = "") -> dict:
+    fn = (filename or "").lower()
+
+    ui_kw = [
+        "screenshot", "screen", "ui", "modal", "dialog", "document", "paper", 
+        "card", "reset", "login", "signin", "auth", "form", "button", "popup", 
+        "page", "tab", "app", "view", "receipt", "pdf", "poster", "logo", "icon", "dashboard"
+    ]
+    has_ui_kw = any(kw in fn for kw in ui_kw)
+
+    try:
+        pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        cv_img = np.array(pil_img)
+        h, w, _ = cv_img.shape
+
+        r, g, b = cv_img[:,:,0], cv_img[:,:,1], cv_img[:,:,2]
+        white_pixels = np.sum((r > 235) & (g > 235) & (b > 235))
+        dark_pixels = np.sum((r < 35) & (g < 35) & (b < 35))
+        total_pixels = float(h * w)
+
+        white_ratio = white_pixels / total_pixels
+        dark_ratio = dark_pixels / total_pixels
+
+        color_std = float(np.mean(np.std(cv_img, axis=(0,1))))
+
+        gray = cv2.cvtColor(cv_img, cv2.COLOR_RGB2GRAY)
+        edges = cv2.Canny(gray, 100, 200)
+        lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=100, minLineLength=80, maxLineGap=5)
+        
+        horizontal_lines = 0
+        if lines is not None:
+            for line in lines:
+                x1, y1, x2, y2 = line[0]
+                if abs(y2 - y1) < 3:
+                    horizontal_lines += 1
+
+        is_ui = (
+            has_ui_kw or 
+            white_ratio > 0.35 or 
+            dark_ratio > 0.45 or 
+            (white_ratio > 0.20 and color_std < 42.0) or 
+            (horizontal_lines > 12 and color_std < 50.0)
+        )
+
+        if is_ui:
+            return {
+                "is_ui": True,
+                "reason": "The uploaded image is a UI/application screenshot and does not contain a valid repaired building photograph."
+            }
+
+    except Exception as e:
+        print(f"[UI Detection Pixel Analysis Error]: {e}")
+        if has_ui_kw:
+            return {
+                "is_ui": True,
+                "reason": "The uploaded image is a UI/application screenshot and does not contain a valid repaired building photograph."
+            }
+
+    return {"is_ui": False, "reason": ""}
+
+def detect_building(image_bytes: bytes, filename: str = "") -> dict:
     """
-    Gate 1: Detect whether the image depicts a real building/structure versus non-building object.
+    Gate 1 & Gate 2: Detect whether the image depicts a real building/structure versus non-building UI / object.
     Strict Rejection: Default result = REJECT (passed=False).
     """
+    ui_check = detect_ui_or_screenshot(image_bytes, filename)
+    if ui_check["is_ui"]:
+        return {
+            "passed": False,
+            "is_ui": True,
+            "confidence": 0.0,
+            "reason": ui_check["reason"],
+            "details": {
+                "detected_class": "UI/Screenshot",
+                "screenshot_detected": True
+            }
+        }
+
     try:
         pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         model, transform = _get_model()
@@ -112,6 +185,7 @@ def detect_building(image_bytes: bytes) -> dict:
 
         return {
             "passed": passed,
+            "is_ui": False,
             "confidence": round(final_confidence if passed else 15.0, 2),
             "details": {
                 "detected_class": top_class_name,
@@ -123,6 +197,7 @@ def detect_building(image_bytes: bytes) -> dict:
         print(f"[Building Detection Error]: {e}")
         return {
             "passed": False,
+            "is_ui": False,
             "confidence": 0.0,
             "details": {"error": str(e), "rejection_policy": "Strict Hard Gate: Default REJECT"}
         }

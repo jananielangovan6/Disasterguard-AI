@@ -188,6 +188,18 @@ export default function OnSiteRepair() {
     const file = e.target.files?.[0];
     if (!file || !currentBuilding) return;
 
+    // Reset previous state immediately on new image upload
+    setLatestAiResult(null);
+    setCompletionImage(null);
+    if (currentBuilding) {
+      updateBuilding(currentBuilding.id, {
+        completionImage: null,
+        repairImageUrl: null,
+        repairStatus: "PENDING_VERIFICATION",
+        isRepaired: false
+      });
+    }
+
     if (!file.type || !file.type.startsWith("image/")) {
       showToast("❌ AI Validation Failed: Uploaded file is not an image file. Select a valid photo.", "error");
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -245,6 +257,7 @@ export default function OnSiteRepair() {
         setLatestAiResult(localResult);
 
         if (!localResult || !localResult.accepted) {
+          setCompletionImage(null);
           showToast(localResult?.reason || "❌ AI Rejection: Photo is not a valid renovated building or contains damage.", "error");
           if (fileInputRef.current) fileInputRef.current.value = "";
           return;
@@ -525,10 +538,8 @@ export default function OnSiteRepair() {
   function handleSubmitToAuthority() {
     if (!currentBuilding) return;
 
-    const imgToSubmit = completionImage || currentBuilding.completionImage;
-
-    if (!imgToSubmit) {
-      showToast("❌ Submission Blocked: Please upload a valid AI-verified restored building photo before submitting report!", "error");
+    if (!latestAiResult || !latestAiResult.accepted || !completionImage) {
+      showToast("❌ Submission Blocked: The uploaded image is not a verified repaired photograph of the assigned building.", "error");
       return;
     }
 
