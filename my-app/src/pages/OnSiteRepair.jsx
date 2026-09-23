@@ -111,8 +111,14 @@ export default function OnSiteRepair() {
     if (currentBuilding) {
       setCompletionImage(currentBuilding.completionImage || null);
       setCompletionRemarks(currentBuilding.completionRemarks || "");
+      setLatestAiResult(null);
     }
   }, [currentBuilding?.id, currentBuilding?.completionImage]);
+
+  const handleSelectMode = (mode) => {
+    setVerificationMode(mode);
+    setLatestAiResult(null);
+  };
 
   async function checkIsDamagedOrDestroyed(file, dataUrl, damagedImageUrl) {
     return new Promise((resolve) => {
@@ -209,12 +215,12 @@ export default function OnSiteRepair() {
 
           if (res && res.ok) {
             const pyData = await res.json();
-            const rulesVerified = Object.values(pyData.rules || {}).map((r, idx) => ({
-              id: idx + 1,
+            const rulesVerified = Array.isArray(pyData.rules) ? pyData.rules : Object.values(pyData.rules || {}).map((r, idx) => ({
+              id: r.id || (idx + 1),
               name: r.name || `Rule ${idx + 1}`,
               desc: r.desc || "",
-              status: r.passed ? "PASSED" : "FAILED",
-              accuracy: `${r.confidence || 0}%`
+              status: r.status || (r.passed ? "PASSED" : "FAILED"),
+              accuracy: r.accuracy || `${r.confidence || 0}%`
             }));
             localResult = {
               accepted: pyData.accepted,
@@ -283,36 +289,13 @@ export default function OnSiteRepair() {
 
         if (res && res.ok) {
           const pyData = await res.json();
-          const rulesVerified = [
-            {
-              id: 1,
-              name: "Rule 1: Building Identity Match",
-              desc: "Confirms photo matches target building site facade",
-              status: pyData.rules?.building_identity?.passed ? "PASSED" : "FAILED",
-              accuracy: `${pyData.rules?.building_identity?.confidence || 0}%`
-            },
-            {
-              id: 2,
-              name: "Rule 2: Reject Other Than Building",
-              desc: "Rejects cars, animals, documents & non-building photos",
-              status: pyData.rules?.building_detected?.passed ? "PASSED" : "FAILED",
-              accuracy: `${pyData.rules?.building_detected?.confidence || 0}%`
-            },
-            {
-              id: 3,
-              name: "Rule 3: Match Damaged with Repaired",
-              desc: "Verifies damaged sections visible in Before Photo are rectified & repaired",
-              status: pyData.rules?.repaired_building_match?.passed ? "PASSED" : "FAILED",
-              accuracy: `${pyData.rules?.repaired_building_match?.confidence || 0}%`
-            },
-            {
-              id: 4,
-              name: "Rule 4: Damaged Building Not Allowed",
-              desc: "Rejects un-repaired damaged building photos, cracks, or facade ruins",
-              status: pyData.rules?.damage_check?.passed ? "PASSED" : "FAILED",
-              accuracy: `${pyData.rules?.damage_check?.confidence || 0}%`
-            }
-          ];
+          const rulesVerified = Array.isArray(pyData.rules) ? pyData.rules : Object.values(pyData.rules || {}).map((r, idx) => ({
+            id: r.id || (idx + 1),
+            name: r.name || `Rule ${idx + 1}`,
+            desc: r.desc || "",
+            status: r.status || (r.passed ? "PASSED" : "FAILED"),
+            accuracy: r.accuracy || `${r.confidence || 0}%`
+          }));
 
           localResult = {
             accepted: pyData.accepted,
@@ -766,7 +749,7 @@ export default function OnSiteRepair() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
                     <button
                       type="button"
-                      onClick={() => setVerificationMode("repaired")}
+                      onClick={() => handleSelectMode("repaired")}
                       className={`px-4 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                         verificationMode === "repaired"
                           ? "bg-emerald-600 text-white shadow-sm"
@@ -778,7 +761,7 @@ export default function OnSiteRepair() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setVerificationMode("renovated")}
+                      onClick={() => handleSelectMode("renovated")}
                       className={`px-4 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                         verificationMode === "renovated"
                           ? "bg-blue-600 text-white shadow-sm"
@@ -786,7 +769,7 @@ export default function OnSiteRepair() {
                       }`}
                     >
                       <Building size={14} />
-                      Option 2: New Renovated Building (Strict Non-Damage)
+                      Option 2: New Renovated Building (3-Rule Model)
                     </button>
                   </div>
                 </div>

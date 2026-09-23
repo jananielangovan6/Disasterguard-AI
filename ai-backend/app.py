@@ -44,7 +44,7 @@ async def verify_restoration(
             raise HTTPException(status_code=400, detail="Original image file is empty.")
         if not rep_bytes or len(rep_bytes) == 0:
             raise HTTPException(status_code=400, detail="Repaired image file is empty.")
-        result = run_4_rule_verification(orig_bytes, rep_bytes)
+        result = run_4_rule_verification(orig_bytes, rep_bytes, filename=repaired_image.filename or "")
         return result
 
     except HTTPException:
