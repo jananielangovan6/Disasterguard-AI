@@ -84,8 +84,8 @@ def check_damage_and_duplicate(orig_bytes: bytes, rep_bytes: bytes) -> dict:
     except Exception as e:
         print(f"[Damage Analysis Error]: {e}")
         return {
-            "passed": True,
-            "confidence": 92.0,
-            "reason": "Building structural damage check complete.",
-            "details": {"error": str(e)}
+            "passed": False,
+            "confidence": 0.0,
+            "reason": "Rule 4 Rejection: Structural damage analysis could not be completed.",
+            "details": {"error": str(e), "rejection_policy": "Strict Hard Gate: Default REJECT"}
         }

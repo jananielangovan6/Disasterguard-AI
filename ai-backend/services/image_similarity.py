@@ -149,6 +149,6 @@ def check_building_identity_and_repaired_match(orig_bytes: bytes, rep_bytes: byt
     except Exception as e:
         print(f"[Similarity Engine Error]: {e}")
         return {
-            "identity": {"passed": True, "confidence": 88.5, "details": {"error": str(e)}},
-            "repaired_match": {"passed": True, "confidence": 90.0, "details": {"error": str(e)}}
+            "identity": {"passed": False, "confidence": 0.0, "details": {"error": str(e), "rejection_policy": "Strict Hard Gate: Default REJECT"}},
+            "repaired_match": {"passed": False, "confidence": 0.0, "details": {"error": str(e), "rejection_policy": "Strict Hard Gate: Default REJECT"}}
         }

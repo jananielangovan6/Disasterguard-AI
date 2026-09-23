@@ -233,7 +233,15 @@ export async function compareOnSiteRepairPhotos(referenceImageUrl, submittedImag
 export async function verifyRenovatedBuildingPhoto(repairedUrl, file) {
   const fileName = (file?.name || "").toLowerCase();
 
-  const nonBuildingKeywords = ["screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", "dialog", "car", "dog", "cat", "person", "avatar", "profile", "receipt"];
+  const nonBuildingKeywords = [
+    "text", "screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", 
+    "dialog", "receipt", "pdf", "poster", "advertisement", "logo", "icon",
+    "drawing", "sketch", "painting", "illustration", "diagram", "chart", "meme", "blank", "abstract",
+    "car", "vehicle", "bike", "truck", "limousine", "automobile", "dog", "cat", "animal", 
+    "person", "people", "avatar", "profile", "selfie", "man", "woman", "human",
+    "road", "street", "bridge", "tree", "trees", "forest", "landscape", "sky", "cloud", 
+    "furniture", "chair", "table", "object", "food", "banana", "apple", "pizza", "hamburger"
+  ];
   const isNonBuilding = nonBuildingKeywords.some((kw) => fileName.includes(kw));
 
   const damagedKeywords = ["damaged", "unrepaired", "crack", "ruin", "destroyed", "collapse", "broken", "debris"];

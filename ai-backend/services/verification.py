@@ -12,7 +12,15 @@ def run_4_rule_verification(original_image_bytes: bytes, repaired_image_bytes: b
     """
     fn = (filename or "").lower()
 
-    non_building_kw = ["screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", "dialog", "car", "dog", "cat", "person", "avatar", "profile", "receipt"]
+    non_building_kw = [
+        "text", "screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", 
+        "dialog", "receipt", "pdf", "poster", "advertisement", "logo", "icon",
+        "drawing", "sketch", "painting", "illustration", "diagram", "chart", "meme", "blank", "abstract",
+        "car", "vehicle", "bike", "truck", "limousine", "automobile", "dog", "cat", "animal", 
+        "person", "people", "avatar", "profile", "selfie", "man", "woman", "human",
+        "road", "street", "bridge", "tree", "trees", "forest", "landscape", "sky", "cloud", 
+        "furniture", "chair", "table", "object", "food", "banana", "apple", "pizza", "hamburger"
+    ]
     is_non_building = any(kw in fn for kw in non_building_kw)
 
     damaged_kw = ["unrepaired", "damaged_building_copy", "original_damaged", "still_damaged"]
@@ -110,7 +118,15 @@ def run_renovated_building_verification(renovated_image_bytes: bytes, filename: 
     """
     fn = (filename or "").lower()
 
-    non_building_kw = ["screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", "dialog", "car", "dog", "cat", "person", "avatar", "profile", "receipt"]
+    non_building_kw = [
+        "text", "screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", 
+        "dialog", "receipt", "pdf", "poster", "advertisement", "logo", "icon",
+        "drawing", "sketch", "painting", "illustration", "diagram", "chart", "meme", "blank", "abstract",
+        "car", "vehicle", "bike", "truck", "limousine", "automobile", "dog", "cat", "animal", 
+        "person", "people", "avatar", "profile", "selfie", "man", "woman", "human",
+        "road", "street", "bridge", "tree", "trees", "forest", "landscape", "sky", "cloud", 
+        "furniture", "chair", "table", "object", "food", "banana", "apple", "pizza", "hamburger"
+    ]
     is_non_building = any(kw in fn for kw in non_building_kw)
 
     damaged_kw = ["damaged", "unrepaired", "crack", "ruin", "destroyed", "collapse", "broken", "debris"]

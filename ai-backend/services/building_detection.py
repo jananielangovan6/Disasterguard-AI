@@ -20,9 +20,13 @@ BUILDING_KEYWORDS = [
 
 # Non-building keywords that trigger explicit rejection
 NON_BUILDING_KEYWORDS = [
-    "dog", "cat", "car", "sports car", "limousine", "truck", "bird", "person",
-    "document", "paper", "envelope", "book", "shoe", "cup", "laptop", "keyboard",
-    "food", "banana", "apple", "pizza", "hamburger"
+    "text", "screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", 
+    "dialog", "receipt", "pdf", "poster", "advertisement", "logo", "icon",
+    "drawing", "sketch", "painting", "illustration", "diagram", "chart", "meme", "blank", "abstract",
+    "car", "vehicle", "bike", "truck", "limousine", "automobile", "dog", "cat", "animal", 
+    "person", "people", "avatar", "profile", "selfie", "man", "woman", "human",
+    "road", "street", "bridge", "tree", "trees", "forest", "landscape", "sky", "cloud", 
+    "furniture", "chair", "table", "object", "food", "banana", "apple", "pizza", "hamburger"
 ]
 
 def _get_model():
@@ -45,8 +49,8 @@ def _get_model():
 
 def detect_building(image_bytes: bytes) -> dict:
     """
-    Rule 2: Detect whether the image depicts a building/structure versus non-building object.
-    Calculates dynamic confidence score (0.0 to 100.0).
+    Gate 1: Detect whether the image depicts a real building/structure versus non-building object.
+    Strict Rejection: Default result = REJECT (passed=False).
     """
     try:
         pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
@@ -89,8 +93,8 @@ def detect_building(image_bytes: bytes) -> dict:
                 if any(kw in cat_name for kw in NON_BUILDING_KEYWORDS):
                     detected_non_building_matches += prob
 
-            if detected_non_building_matches > 0.4:
-                building_prob = max(0.1, 1.0 - detected_non_building_matches)
+            if detected_non_building_matches > 0.3:
+                building_prob = max(0.05, 1.0 - detected_non_building_matches)
                 top_class_name = categories[top_catid[0].item()]
             elif detected_building_matches > 0.1:
                 building_prob = min(0.99, 0.70 + detected_building_matches)
@@ -98,16 +102,17 @@ def detect_building(image_bytes: bytes) -> dict:
 
         # Combine neural classifier and spatial line geometry
         geometry_score = min(1.0, (edge_density * 3.5) + (line_count / 120.0))
+
         final_confidence = float(np.clip(
             55.0 + (building_prob * 30.0) + (geometry_score * 14.5),
-            25.0, 99.6
+            10.0, 99.6
         ))
         
-        passed = final_confidence >= 70.0
+        passed = final_confidence >= 70.0 and building_prob >= 0.5
 
         return {
             "passed": passed,
-            "confidence": round(final_confidence, 2),
+            "confidence": round(final_confidence if passed else 15.0, 2),
             "details": {
                 "detected_class": top_class_name,
                 "edge_density": round(edge_density, 4),
@@ -117,7 +122,7 @@ def detect_building(image_bytes: bytes) -> dict:
     except Exception as e:
         print(f"[Building Detection Error]: {e}")
         return {
-            "passed": True,
-            "confidence": 85.0,
-            "details": {"error": str(e)}
+            "passed": False,
+            "confidence": 0.0,
+            "details": {"error": str(e), "rejection_policy": "Strict Hard Gate: Default REJECT"}
         }
