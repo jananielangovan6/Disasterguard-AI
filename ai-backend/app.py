@@ -61,7 +61,7 @@ async def verify_renovated(
         ren_bytes = await renovated_image.read()
         if not ren_bytes or len(ren_bytes) == 0:
             raise HTTPException(status_code=400, detail="Renovated building image file is empty.")
-        result = run_renovated_building_verification(ren_bytes)
+        result = run_renovated_building_verification(ren_bytes, filename=renovated_image.filename or "")
         return result
 
     except HTTPException:

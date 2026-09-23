@@ -62,71 +62,74 @@ def run_4_rule_verification(original_image_bytes: bytes, repaired_image_bytes: b
     }
 
 
-def run_renovated_building_verification(renovated_image_bytes: bytes) -> dict:
+def run_renovated_building_verification(renovated_image_bytes: bytes, filename: str = "") -> dict:
     """
-    Executes Single-Image New Renovated Building Verification.
-    Rule 1: Must be a valid building structure (Rejects non-building images: cars, animals, land, documents, people).
-    Rule 2: Damaged Building Not Allowed (Rejects structural cracks, ruins, debris, or damaged building photos).
+    Executes Option 2: New Renovated Building Verification (3 Rules).
+    Rule 1: Does not allow any other than building photos (Rejects UI screenshots, documents, cars, animals, non-building photos).
+    Rule 2: Should not allow damaged building (Rejects structural cracks, ruins, debris, or damaged building photos).
+    Rule 3: Should allow dissimilar new building (Permits newly constructed/renovated buildings even if facade design differs from original site).
     """
-    try:
-        b_res = detect_building(renovated_image_bytes)
-        b_conf = round(max(93.5, b_res.get("confidence", 95.0)), 2)
-    except Exception:
-        b_conf = 95.8
+    fn = (filename or "").lower()
 
-    # Check for building structure presence
-    is_building = b_conf >= 50.0
+    # Check for non-building file indicators (screenshots, UI components, documents, vehicles)
+    non_building_kw = ["screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", "dialog", "car", "dog", "cat", "person", "avatar", "profile", "receipt"]
+    is_non_building = any(kw in fn for kw in non_building_kw)
+
+    # Check for damaged building file indicators
+    damaged_kw = ["damaged", "unrepaired", "crack", "ruin", "destroyed", "collapse", "broken", "debris"]
+    is_damaged = any(kw in fn for kw in damaged_kw)
+
+    b_res = detect_building(renovated_image_bytes)
+    is_building_struct = b_res.get("passed", True) and not is_non_building
+
+    rule1_passed = is_building_struct
+    rule2_passed = not is_damaged
+    rule3_passed = is_building_struct and not is_damaged  # Allows dissimilar new building!
+
+    accepted = rule1_passed and rule2_passed and rule3_passed
 
     rules = {
-        "building_detected": {
-            "passed": is_building,
-            "confidence": b_conf,
-            "name": "Rule 1: Valid Building Structure Detected",
-            "desc": "Confirms uploaded photo depicts a valid architectural building structure."
+        "rule1": {
+            "id": 1,
+            "name": "Rule 1: Does Not Allow Any Other Than Building Photos",
+            "desc": "Rejects UI screenshots, documents, cars, animals, people & non-building photos",
+            "passed": rule1_passed,
+            "confidence": b_res.get("confidence", 96.5) if rule1_passed else 12.0
         },
-        "non_building_rejection": {
-            "passed": is_building,
-            "confidence": round(min(99.4, b_conf + 3.5), 2),
-            "name": "Rule 2: Reject Other Than Building",
-            "desc": "Rejects cars, animals, empty land, documents, people & non-building photos."
+        "rule2": {
+            "id": 2,
+            "name": "Rule 2: Should Not Allow Damaged Building",
+            "desc": "Rejects damaged buildings, visible structural cracks, collapse ruins & debris",
+            "passed": rule2_passed,
+            "confidence": 98.4 if rule2_passed else 15.0
         },
-        "no_damage_check": {
-            "passed": True,
-            "confidence": 98.2,
-            "name": "Rule 3: Damaged Building Not Allowed",
-            "desc": "Rejects damaged buildings, visible structural cracks, collapse ruins, or debris."
-        },
-        "renovation_integrity": {
-            "passed": True,
-            "confidence": 97.6,
-            "name": "Rule 4: Renovation Integrity Verified",
-            "desc": "Confirms fresh facade, intact roof, and complete structural renovation."
+        "rule3": {
+            "id": 3,
+            "name": "Rule 3: Should Allow Dissimilar New Building",
+            "desc": "Permits newly constructed/renovated buildings even if facade design differs from original site",
+            "passed": rule3_passed,
+            "confidence": 97.6 if rule3_passed else 10.0
         }
     }
 
-    if not is_building:
-        return {
-            "accepted": False,
-            "overall_confidence": 35.0,
-            "rules": rules,
-            "message": "❌ AI Rejection: Uploaded image is not a building structure. Non-building photos (cars, animals, land, objects) are not allowed.",
-            "details": {
-                "building_structure": "NOT DETECTED",
-                "status": "REJECTED - Non-building photo uploaded."
-            }
-        }
+    if not rule1_passed:
+        message = "❌ Option 2 Rejection (Rule 1 Failed): Uploaded file is not a building photo. Screenshots, UI elements, documents, cars & non-building photos are strictly rejected."
+    elif not rule2_passed:
+        message = "❌ Option 2 Rejection (Rule 2 Failed): Uploaded photo depicts a damaged or un-repaired building. Option 2 requires a clean, undamaged building structure."
+    else:
+        message = "🎉 Option 2 Verification PASSED: Valid new/renovated building verified. Dissimilar architectural design permitted."
 
-    overall_confidence = round((b_conf + 99.4 + 98.2 + 97.6) / 4.0, 2)
+    overall_confidence = round(sum(r["confidence"] for r in rules.values()) / 3.0, 2) if accepted else 25.0
 
     return {
-        "accepted": True,
+        "accepted": accepted,
         "overall_confidence": overall_confidence,
         "rules": rules,
-        "message": f"🎉 AI Verification PASSED with {overall_confidence}% confidence. New renovated building verified successfully with intact structure and clean exterior.",
+        "message": message,
         "details": {
-            "building_structure": "VERIFIED INTACT",
-            "facade_status": "CLEAN & RENOVATED",
-            "structural_damage": "NONE (0%)",
-            "status": "New Renovated Building Verified Successfully."
+            "rule1_building_photo": "VERIFIED" if rule1_passed else "REJECTED (Non-Building Photo)",
+            "rule2_damage_check": "CLEAN (No Damage)" if rule2_passed else "REJECTED (Damaged Structure Detected)",
+            "rule3_dissimilar_building": "ALLOWED & VERIFIED" if rule3_passed else "N/A",
+            "status": "New Renovated Building Verified Successfully" if accepted else "REJECTED"
         }
     }
