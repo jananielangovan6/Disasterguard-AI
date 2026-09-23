@@ -332,10 +332,10 @@ export default function OnSiteRepair() {
             details: pyData.details
           };
         } else {
-          localResult = await compareOnSiteRepairPhotos(beforeImg, dataUrl, currentBuilding);
+          localResult = await compareOnSiteRepairPhotos(beforeImg, dataUrl, currentBuilding, file);
         }
       } catch (e) {
-        localResult = await compareOnSiteRepairPhotos(beforeImg, dataUrl, currentBuilding);
+        localResult = await compareOnSiteRepairPhotos(beforeImg, dataUrl, currentBuilding, file);
       }
 
       if (!localResult) return;
