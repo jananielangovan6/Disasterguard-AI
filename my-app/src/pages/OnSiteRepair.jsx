@@ -223,9 +223,15 @@ export default function OnSiteRepair() {
               accuracy: r.accuracy || `${r.confidence || 0}%`
             }));
             localResult = {
+              selected_option: pyData.selected_option || "OPTION 2",
+              building_detected: pyData.building_detected || (pyData.accepted ? "YES" : "NO"),
+              renovated_repaired: pyData.renovated_repaired || (pyData.accepted ? "YES" : "NO"),
+              damage_present: pyData.damage_present || "NO",
+              same_building_as_original: pyData.same_building_as_original || "NOT APPLICABLE",
+              verification_result: pyData.verification_result || (pyData.accepted ? "ACCEPTED" : "REJECTED"),
               accepted: pyData.accepted,
               structuralMatchScore: pyData.overall_confidence,
-              reason: pyData.message,
+              reason: pyData.reason || pyData.message,
               rulesVerified: rulesVerified,
               details: pyData.details
             };
@@ -235,6 +241,8 @@ export default function OnSiteRepair() {
         } catch (e) {
           localResult = await verifyRenovatedBuildingPhoto(dataUrl, file);
         }
+
+        setLatestAiResult(localResult);
 
         if (!localResult || !localResult.accepted) {
           showToast(localResult?.reason || "❌ AI Rejection: Photo is not a valid renovated building or contains damage.", "error");
@@ -257,7 +265,6 @@ export default function OnSiteRepair() {
             completionRemarks: completionRemarks || "New Renovated Building Verified Successfully."
           });
         }
-        setLatestAiResult(localResult);
         setAiModalData({
           buildingName: currentBuilding.name,
           confidence: localResult.structuralMatchScore || 97.8,
@@ -298,10 +305,16 @@ export default function OnSiteRepair() {
           }));
 
           localResult = {
+            selected_option: pyData.selected_option || "OPTION 1",
+            building_detected: pyData.building_detected || "YES",
+            renovated_repaired: pyData.renovated_repaired || "YES",
+            damage_present: pyData.damage_present || "NO",
+            same_building_as_original: pyData.same_building_as_original || "YES",
+            verification_result: pyData.verification_result || (pyData.accepted ? "ACCEPTED" : "REJECTED"),
             accepted: pyData.accepted,
             structuralMatchScore: pyData.overall_confidence,
-            reason: pyData.message,
-            reasoning: pyData.message,
+            reason: pyData.reason || pyData.message,
+            reasoning: pyData.reason || pyData.message,
             rulesVerified: rulesVerified,
             details: pyData.details
           };
@@ -981,6 +994,42 @@ export default function OnSiteRepair() {
                             }`}>
                               {latestAiResult.accepted ? `ACCEPTED (${latestAiResult.structuralMatchScore || 98.8}%)` : "❌ REJECTED"}
                             </span>
+                          </div>
+
+                          {/* STRUCTURED SUMMARY PANEL */}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white/90 p-3 rounded-xl border border-slate-200 text-[11px] font-mono">
+                            <div>
+                              <span className="text-slate-500 block text-[9px] uppercase font-bold">Selected Option</span>
+                              <span className="font-bold text-slate-800">{latestAiResult.selected_option || (verificationMode === "renovated" ? "OPTION 2" : "OPTION 1")}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[9px] uppercase font-bold">Building Detected</span>
+                              <span className={`font-bold ${latestAiResult.building_detected === "YES" ? "text-emerald-700" : "text-red-700"}`}>
+                                {latestAiResult.building_detected || "YES"}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[9px] uppercase font-bold">Renovated/Repaired</span>
+                              <span className={`font-bold ${latestAiResult.renovated_repaired === "YES" ? "text-emerald-700" : "text-red-700"}`}>
+                                {latestAiResult.renovated_repaired || "YES"}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[9px] uppercase font-bold">Damage Present</span>
+                              <span className={`font-bold ${latestAiResult.damage_present === "YES" ? "text-red-700" : "text-emerald-700"}`}>
+                                {latestAiResult.damage_present || "NO"}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[9px] uppercase font-bold">Same Building</span>
+                              <span className="font-bold text-slate-800">{latestAiResult.same_building_as_original || (verificationMode === "renovated" ? "NOT APPLICABLE" : "YES")}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[9px] uppercase font-bold">Verification Result</span>
+                              <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${latestAiResult.accepted ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-red-100 text-red-800 border border-red-300"}`}>
+                                {latestAiResult.verification_result || (latestAiResult.accepted ? "ACCEPTED" : "REJECTED")}
+                              </span>
+                            </div>
                           </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
