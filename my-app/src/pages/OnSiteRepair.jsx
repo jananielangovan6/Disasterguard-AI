@@ -98,7 +98,7 @@ export default function OnSiteRepair() {
     "/damaged_house_site.png";
 
   const [completionImage, setCompletionImage] = useState(
-    currentBuilding?.completionImage || null
+    currentBuilding?.repairStatus === "VERIFIED_REPAIRED" ? (currentBuilding?.completionImage || null) : null
   );
   const [completionRemarks, setCompletionRemarks] = useState(
     currentBuilding?.completionRemarks || ""
@@ -109,11 +109,11 @@ export default function OnSiteRepair() {
 
   useEffect(() => {
     if (currentBuilding) {
-      setCompletionImage(currentBuilding.completionImage || null);
+      setCompletionImage(currentBuilding.repairStatus === "VERIFIED_REPAIRED" ? (currentBuilding.completionImage || null) : null);
       setCompletionRemarks(currentBuilding.completionRemarks || "");
       setLatestAiResult(null);
     }
-  }, [currentBuilding?.id, currentBuilding?.completionImage]);
+  }, [currentBuilding?.id]);
 
   const handleSelectMode = (mode) => {
     setVerificationMode(mode);
@@ -876,33 +876,40 @@ export default function OnSiteRepair() {
                     })()}
 
                     {/* 2. AFTER REPAIR PHOTO (RESTORED BUILDING IMAGE ONLY) */}
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                          2. AFTER REPAIR (Restored Structure)
-                        </span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono ${
-                          currentBuilding.repairStatus === "VERIFIED_REPAIRED"
-                            ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                            : currentBuilding.repairStatus === "REJECTED"
-                            ? "bg-red-100 text-red-800 border border-red-300"
-                            : currentBuilding.repairStatus === "PENDING_VERIFICATION"
-                            ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
-                            : "bg-amber-100 text-amber-800 border border-amber-300"
-                        }`}>
-                          {currentBuilding.repairStatus === "VERIFIED_REPAIRED"
-                            ? "✨ VERIFIED REPAIRED"
-                            : currentBuilding.repairStatus === "REJECTED"
-                            ? "❌ REPAIR REJECTED"
-                            : currentBuilding.repairStatus === "PENDING_VERIFICATION"
-                            ? "⏳ PENDING VERIFICATION"
-                            : "AWAITING PHOTO"}
-                        </span>
-                      </div>
+                    {(() => {
+                      const isVerified = Boolean(
+                        latestAiResult ? latestAiResult.accepted : (completionImage && currentBuilding?.repairStatus === "VERIFIED_REPAIRED")
+                      );
+                      const isRejected = Boolean(
+                        latestAiResult ? !latestAiResult.accepted : (currentBuilding?.repairStatus === "REJECTED")
+                      );
 
-                      <div className="relative group overflow-hidden rounded-xl border-2 border-emerald-300 bg-slate-900 h-[270px] w-full flex items-center justify-center">
-                        {completionImage ? (
+                      return (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-mono font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full ${isVerified ? "bg-emerald-600" : isRejected ? "bg-red-600" : "bg-amber-500"}`} />
+                              2. AFTER REPAIR (Restored Structure)
+                            </span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono ${
+                              isVerified
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                : isRejected
+                                ? "bg-red-100 text-red-800 border border-red-300"
+                                : "bg-amber-100 text-amber-800 border border-amber-300"
+                            }`}>
+                              {isVerified
+                                ? "✨ VERIFIED REPAIRED"
+                                : isRejected
+                                ? "❌ REPAIR REJECTED"
+                                : "AWAITING PHOTO"}
+                            </span>
+                          </div>
+
+                          <div className={`relative group overflow-hidden rounded-xl border-2 ${
+                            isVerified ? "border-emerald-400" : isRejected ? "border-red-400" : "border-emerald-300"
+                          } bg-slate-900 h-[270px] w-full flex items-center justify-center`}>
+                        {completionImage && isVerified ? (
                           <>
                             <img
                               src={completionImage}
@@ -944,13 +951,15 @@ export default function OnSiteRepair() {
                         </div>
                       </div>
                       <p className="text-[11px] text-slate-500 italic">
-                        {currentBuilding.repairStatus === "VERIFIED_REPAIRED"
+                        {isVerified
                           ? `Restored building photo verified by AI Vision & Engineer ${user?.name || "Swetha S"}.`
-                          : currentBuilding.repairStatus === "REJECTED"
-                          ? `AI Verification Rejected: ${currentBuilding.repairVerificationNotes || "Building damaged or un-matched."}`
+                          : isRejected
+                          ? `AI Verification Rejected: ${latestAiResult?.reason || "Uploaded file is a non-building UI screenshot or document."}`
                           : "Upload a restored building photo to submit to backend Vision AI repair verification service."}
                       </p>
                     </div>
+                      );
+                    })()}
                   </div>
 
 

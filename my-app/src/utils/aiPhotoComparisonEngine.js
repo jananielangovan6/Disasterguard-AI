@@ -46,12 +46,16 @@ function extractFeatureVector(imgElement) {
 
   let chroma = [0.33, 0.33, 0.33];
   let whiteRatio = 0;
+  let darkRatio = 0;
   let darkCrackRatio = 0;
+  let colorStd = 100;
+  let isNonBuildingPixelPattern = false;
 
   try {
     const imgData = ctx.getImageData(0, 0, 64, 64);
     const data = imgData.data;
     let rSum = 0, gSum = 0, bSum = 0;
+    let rVals = [], gVals = [], bVals = [];
     let whitePixels = 0;
     let darkPixels = 0;
     const totalPixels = 64 * 64;
@@ -62,20 +66,42 @@ function extractFeatureVector(imgElement) {
       const b = data[i + 2];
       rSum += r; gSum += g; bSum += b;
 
-      if (r > 235 && g > 235 && b > 235) whitePixels++;
-      if (r < 50 && g < 50 && b < 50) darkPixels++;
+      rVals.push(r); gVals.push(g); bVals.push(b);
+
+      if (r > 230 && g > 230 && b > 230) whitePixels++;
+      if (r < 45 && g < 55 && b < 55) darkPixels++;
     }
 
     const totalColor = rSum + gSum + bSum || 1;
     chroma = [rSum / totalColor, gSum / totalColor, bSum / totalColor];
     whiteRatio = whitePixels / totalPixels;
+    darkRatio = darkPixels / totalPixels;
     darkCrackRatio = darkPixels / totalPixels;
+
+    const rMean = rSum / totalPixels;
+    const rVar = rVals.reduce((acc, val) => acc + Math.pow(val - rMean, 2), 0) / totalPixels;
+
+    const gMean = gSum / totalPixels;
+    const gVar = gVals.reduce((acc, val) => acc + Math.pow(val - gMean, 2), 0) / totalPixels;
+
+    const bMean = bSum / totalPixels;
+    const bVar = bVals.reduce((acc, val) => acc + Math.pow(val - bMean, 2), 0) / totalPixels;
+
+    colorStd = (Math.sqrt(rVar) + Math.sqrt(gVar) + Math.sqrt(bVar)) / 3.0;
+
+    // Certificates / UI screenshots / Slides / Documents / Logos / Modals
+    if (whiteRatio > 0.25 || darkRatio > 0.30 || colorStd < 40.0) {
+      isNonBuildingPixelPattern = true;
+    }
   } catch (e) {}
 
   return {
     chroma,
     whiteRatio,
+    darkRatio,
     darkCrackRatio,
+    colorStd,
+    isNonBuildingPixelPattern,
     aspect: (imgElement.width || 1) / (imgElement.height || 1)
   };
 }
@@ -111,7 +137,7 @@ export async function compareOnSiteRepairPhotos(referenceImageUrl, submittedImag
     "car", "vehicle", "bike", "truck", "dog", "cat", "person", "selfie", "road", "landscape"
   ];
 
-  const isUiScreenshot = nonBuildingKeywords.some((kw) => fileName.includes(kw)) || subFeatures.whiteRatio > 0.35;
+  const isUiScreenshot = nonBuildingKeywords.some((kw) => fileName.includes(kw)) || subFeatures.isNonBuildingPixelPattern || subFeatures.whiteRatio > 0.25;
 
   if (isUiScreenshot) {
     return {
@@ -251,16 +277,19 @@ export async function compareOnSiteRepairPhotos(referenceImageUrl, submittedImag
 export async function verifyRenovatedBuildingPhoto(repairedUrl, file) {
   const fileName = (file?.name || "").toLowerCase();
 
+  const subImg = await loadImageElement(repairedUrl);
+  const subFeatures = subImg ? extractFeatureVector(subImg) : { isNonBuildingPixelPattern: false, whiteRatio: 0 };
+
   const nonBuildingKeywords = [
-    "text", "screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", 
-    "dialog", "receipt", "pdf", "poster", "advertisement", "logo", "icon",
+    "text", "screenshot", "screen", "ui", "modal", "dialog", "document", "paper", "card", "popup", 
+    "dialog", "receipt", "pdf", "poster", "advertisement", "logo", "icon", "dashboard", "certificate", "completion", "mongodb", "proof",
     "drawing", "sketch", "painting", "illustration", "diagram", "chart", "meme", "blank", "abstract",
     "car", "vehicle", "bike", "truck", "limousine", "automobile", "dog", "cat", "animal", 
     "person", "people", "avatar", "profile", "selfie", "man", "woman", "human",
     "road", "street", "bridge", "tree", "trees", "forest", "landscape", "sky", "cloud", 
     "furniture", "chair", "table", "object", "food", "banana", "apple", "pizza", "hamburger"
   ];
-  const isNonBuilding = nonBuildingKeywords.some((kw) => fileName.includes(kw));
+  const isNonBuilding = nonBuildingKeywords.some((kw) => fileName.includes(kw)) || subFeatures.isNonBuildingPixelPattern || subFeatures.whiteRatio > 0.25;
 
   const damagedKeywords = ["damaged", "unrepaired", "crack", "ruin", "destroyed", "collapse", "broken", "debris"];
   const isDamaged = damagedKeywords.some((kw) => fileName.includes(kw));
