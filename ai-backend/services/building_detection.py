@@ -53,9 +53,16 @@ def detect_ui_or_screenshot(image_bytes: bytes, filename: str = "") -> dict:
     ui_kw = [
         "screenshot", "screen", "ui", "modal", "dialog", "document", "paper", 
         "card", "reset", "login", "signin", "auth", "form", "button", "popup", 
-        "page", "tab", "app", "view", "receipt", "pdf", "poster", "logo", "icon", "dashboard"
+        "page", "tab", "app", "view", "receipt", "pdf", "poster", "logo", "icon", "dashboard",
+        "certificate", "completion", "mongodb", "proof"
     ]
     has_ui_kw = any(kw in fn for kw in ui_kw)
+
+    if has_ui_kw:
+        return {
+            "is_ui": True,
+            "reason": "The uploaded image is a UI/application screenshot and does not contain a valid repaired building photograph."
+        }
 
     try:
         pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
@@ -63,33 +70,16 @@ def detect_ui_or_screenshot(image_bytes: bytes, filename: str = "") -> dict:
         h, w, _ = cv_img.shape
 
         r, g, b = cv_img[:,:,0], cv_img[:,:,1], cv_img[:,:,2]
-        white_pixels = np.sum((r > 235) & (g > 235) & (b > 235))
-        dark_pixels = np.sum((r < 35) & (g < 35) & (b < 35))
+        pure_white_pixels = np.sum((r > 248) & (g > 248) & (b > 248))
+        pure_dark_pixels = np.sum((r < 15) & (g < 15) & (b < 15))
         total_pixels = float(h * w)
 
-        white_ratio = white_pixels / total_pixels
-        dark_ratio = dark_pixels / total_pixels
+        pure_white_ratio = pure_white_pixels / total_pixels
+        pure_dark_ratio = pure_dark_pixels / total_pixels
 
         color_std = float(np.mean(np.std(cv_img, axis=(0,1))))
 
-        gray = cv2.cvtColor(cv_img, cv2.COLOR_RGB2GRAY)
-        edges = cv2.Canny(gray, 100, 200)
-        lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=100, minLineLength=80, maxLineGap=5)
-        
-        horizontal_lines = 0
-        if lines is not None:
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
-                if abs(y2 - y1) < 3:
-                    horizontal_lines += 1
-
-        is_ui = (
-            has_ui_kw or 
-            white_ratio > 0.35 or 
-            dark_ratio > 0.45 or 
-            (white_ratio > 0.20 and color_std < 42.0) or 
-            (horizontal_lines > 12 and color_std < 50.0)
-        )
+        is_ui = (pure_white_ratio > 0.65 and color_std < 22.0) or (pure_dark_ratio > 0.70 and color_std < 18.0)
 
         if is_ui:
             return {
@@ -99,11 +89,6 @@ def detect_ui_or_screenshot(image_bytes: bytes, filename: str = "") -> dict:
 
     except Exception as e:
         print(f"[UI Detection Pixel Analysis Error]: {e}")
-        if has_ui_kw:
-            return {
-                "is_ui": True,
-                "reason": "The uploaded image is a UI/application screenshot and does not contain a valid repaired building photograph."
-            }
 
     return {"is_ui": False, "reason": ""}
 

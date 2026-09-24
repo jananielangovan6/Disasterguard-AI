@@ -492,29 +492,35 @@ export default function OnSiteRepair() {
     }
 
     // Fallback if offline
-    const result = await compareOnSiteRepairPhotos(beforeImg, repairedUrl, currentBuilding);
+    const repFile = await urlToFile(repairedUrl, "repaired_building.jpg");
+    const result = await compareOnSiteRepairPhotos(beforeImg, repairedUrl, currentBuilding, repFile);
     setLatestAiResult(result);
-    setCompletionImage(repairedUrl);
-    updateBuilding(currentBuilding.id, {
-      completionImage: repairedUrl,
-      repairImageUrl: repairedUrl,
-      repairStatus: "VERIFIED_REPAIRED",
-      repairVerificationNotes: `Building fully repaired and verified by Python AI Structural Alignment for site "${currentBuilding.name}".`,
-      status: "COMPLETED",
-      progress: 100,
-      isRepaired: true,
-      completionDate: new Date().toISOString(),
-      completionRemarks: completionRemarks || "Building fully repaired and verified by Python AI Structural Alignment."
-    });
-    setAiModalData({
-      buildingName: currentBuilding.name,
-      confidence: result.structuralMatchScore || 98.8,
-      roofMatch: 99.6,
-      windowMatch: 99.2,
-      details: result.details
-    });
-    setShowAiSuccessModal(true);
-    showToast(`🎉 Python AI Verification Complete: Building "${currentBuilding.name}" is Repaired Successfully! Progress updated to 100% COMPLETED.`, "success");
+    if (result.accepted) {
+      setCompletionImage(repairedUrl);
+      updateBuilding(currentBuilding.id, {
+        completionImage: repairedUrl,
+        repairImageUrl: repairedUrl,
+        repairStatus: "VERIFIED_REPAIRED",
+        repairVerificationNotes: result.reason || `Building fully repaired and verified by AI Structural Alignment for site "${currentBuilding.name}".`,
+        status: "COMPLETED",
+        progress: 100,
+        isRepaired: true,
+        completionDate: new Date().toISOString(),
+        completionRemarks: completionRemarks || "Building fully repaired and verified by AI Structural Alignment."
+      });
+      setAiModalData({
+        buildingName: currentBuilding.name,
+        confidence: result.structuralMatchScore || 98.8,
+        roofMatch: 99.6,
+        windowMatch: 99.2,
+        details: result.details
+      });
+      setShowAiSuccessModal(true);
+      showToast(`🎉 AI Verification Complete: Building "${currentBuilding.name}" is Repaired Successfully! Progress updated to 100% COMPLETED.`, "success");
+    } else {
+      setCompletionImage(null);
+      showToast(`❌ AI Verification Rejection: ${result.reason}`, "error");
+    }
   }
 
   function handleRemoveImage(e) {

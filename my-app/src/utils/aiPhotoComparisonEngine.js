@@ -46,6 +46,7 @@ function extractFeatureVector(imgElement) {
 
   let chroma = [0.33, 0.33, 0.33];
   let whiteRatio = 0;
+  let pureWhiteRatio = 0;
   let darkRatio = 0;
   let darkCrackRatio = 0;
   let colorStd = 100;
@@ -57,6 +58,7 @@ function extractFeatureVector(imgElement) {
     let rSum = 0, gSum = 0, bSum = 0;
     let rVals = [], gVals = [], bVals = [];
     let whitePixels = 0;
+    let pureWhitePixels = 0;
     let darkPixels = 0;
     const totalPixels = 64 * 64;
 
@@ -69,12 +71,14 @@ function extractFeatureVector(imgElement) {
       rVals.push(r); gVals.push(g); bVals.push(b);
 
       if (r > 230 && g > 230 && b > 230) whitePixels++;
+      if (r > 248 && g > 248 && b > 248) pureWhitePixels++;
       if (r < 45 && g < 55 && b < 55) darkPixels++;
     }
 
     const totalColor = rSum + gSum + bSum || 1;
     chroma = [rSum / totalColor, gSum / totalColor, bSum / totalColor];
     whiteRatio = whitePixels / totalPixels;
+    pureWhiteRatio = pureWhitePixels / totalPixels;
     darkRatio = darkPixels / totalPixels;
     darkCrackRatio = darkPixels / totalPixels;
 
@@ -89,8 +93,8 @@ function extractFeatureVector(imgElement) {
 
     colorStd = (Math.sqrt(rVar) + Math.sqrt(gVar) + Math.sqrt(bVar)) / 3.0;
 
-    // Certificates / UI screenshots / Slides / Documents / Logos / Modals
-    if (whiteRatio > 0.25 || darkRatio > 0.30 || colorStd < 40.0) {
+    // Certificates / UI screenshots / Slides / Documents / Logos / Modals (pure white background & flat color variance)
+    if (pureWhiteRatio > 0.65 && colorStd < 22.0) {
       isNonBuildingPixelPattern = true;
     }
   } catch (e) {}
@@ -98,6 +102,7 @@ function extractFeatureVector(imgElement) {
   return {
     chroma,
     whiteRatio,
+    pureWhiteRatio,
     darkRatio,
     darkCrackRatio,
     colorStd,
@@ -137,7 +142,7 @@ export async function compareOnSiteRepairPhotos(referenceImageUrl, submittedImag
     "car", "vehicle", "bike", "truck", "dog", "cat", "person", "selfie", "road", "landscape"
   ];
 
-  const isUiScreenshot = nonBuildingKeywords.some((kw) => fileName.includes(kw)) || subFeatures.isNonBuildingPixelPattern || subFeatures.whiteRatio > 0.25;
+  const isUiScreenshot = nonBuildingKeywords.some((kw) => fileName.includes(kw)) || subFeatures.isNonBuildingPixelPattern;
 
   if (isUiScreenshot) {
     return {
@@ -289,7 +294,7 @@ export async function verifyRenovatedBuildingPhoto(repairedUrl, file) {
     "road", "street", "bridge", "tree", "trees", "forest", "landscape", "sky", "cloud", 
     "furniture", "chair", "table", "object", "food", "banana", "apple", "pizza", "hamburger"
   ];
-  const isNonBuilding = nonBuildingKeywords.some((kw) => fileName.includes(kw)) || subFeatures.isNonBuildingPixelPattern || subFeatures.whiteRatio > 0.25;
+  const isNonBuilding = nonBuildingKeywords.some((kw) => fileName.includes(kw)) || subFeatures.isNonBuildingPixelPattern;
 
   const damagedKeywords = ["damaged", "unrepaired", "crack", "ruin", "destroyed", "collapse", "broken", "debris"];
   const isDamaged = damagedKeywords.some((kw) => fileName.includes(kw));
