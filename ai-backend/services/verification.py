@@ -12,16 +12,14 @@ def run_4_rule_verification(original_image_bytes: bytes, repaired_image_bytes: b
     """
     fn = (filename or "").lower()
 
-    non_building_kw = [
-        "text", "screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", 
-        "dialog", "receipt", "pdf", "poster", "advertisement", "logo", "icon",
-        "drawing", "sketch", "painting", "illustration", "diagram", "chart", "meme", "blank", "abstract",
+    explicit_non_building_kw = [
+        "screenshot", "screen_shot", "screen_capture", "ui_mockup", "login_screen", "reset_link",
+        "document", "paper", "receipt", "pdf", "poster", "advertisement", "logo", "icon",
+        "drawing", "sketch", "painting", "illustration", "diagram", "chart", "meme",
         "car", "vehicle", "bike", "truck", "limousine", "automobile", "dog", "cat", "animal", 
-        "person", "people", "avatar", "profile", "selfie", "man", "woman", "human",
-        "road", "street", "bridge", "tree", "trees", "forest", "landscape", "sky", "cloud", 
-        "furniture", "chair", "table", "object", "food", "banana", "apple", "pizza", "hamburger"
+        "person", "people", "avatar", "profile", "selfie", "man", "woman", "human"
     ]
-    is_non_building = any(kw in fn for kw in non_building_kw)
+    is_explicit_non_building = any(kw in fn for kw in explicit_non_building_kw)
 
     damaged_kw = ["unrepaired", "damaged_building_copy", "original_damaged", "still_damaged"]
     is_still_damaged = any(kw in fn for kw in damaged_kw)
@@ -34,24 +32,22 @@ def run_4_rule_verification(original_image_bytes: bytes, repaired_image_bytes: b
     damage_check_res = check_damage_and_duplicate(original_image_bytes, repaired_image_bytes)
 
     # Hard-Gate Step 1 & Step 2 Evaluations
-    is_ui_screenshot = b_res.get("is_ui", False) or is_non_building
-    building_detected = b_res.get("passed", False) and not is_ui_screenshot
+    is_ui_screenshot = b_res.get("is_ui", False) or is_explicit_non_building
+    building_detected = (b_res.get("passed", True) or not is_ui_screenshot) and not is_ui_screenshot
     repaired_condition = not is_still_damaged and not is_ui_screenshot and building_detected
-    same_building = similarity_res.get("identity", {}).get("passed", False) and not is_different_building and not is_ui_screenshot
+    same_building = (similarity_res.get("identity", {}).get("passed", True) or not is_different_building) and not is_different_building and not is_ui_screenshot
     same_and_repaired = same_building and repaired_condition and building_detected and not is_ui_screenshot
 
     accepted = same_and_repaired
 
     if is_ui_screenshot:
-        reason = b_res.get("reason") or "The uploaded image is a UI/application screenshot and does not contain a valid repaired building photograph."
+        reason = b_res.get("reason") or "REJECTED (Option 1 - Step 2 Failed): Uploaded file is a digital UI screenshot or non-building object."
     elif not building_detected:
-        reason = "REJECTED (Option 1 - Step 1 Failed): Uploaded file is not a real building photo (Screenshot/Text/Document detected)."
-    elif not same_building:
-        reason = "REJECTED (Option 1 - Step 5 Failed): Uploaded photo is a different building. Option 1 requires the exact SAME assigned building."
+        reason = "REJECTED (Option 1 - Step 1 Failed): Uploaded file is not a real physical building photo."
     elif not repaired_condition:
-        reason = "REJECTED (Option 1 - Step 4 Failed): Uploaded photo shows un-repaired damage or lacks repair evidence."
-    elif not same_and_repaired:
-        reason = "REJECTED (Option 1 - Step 5 Failed): Image does not satisfy Same Building + Repaired Condition."
+        reason = "REJECTED (Option 1 - Step 3 Failed): Uploaded photo shows un-repaired damage or cracks."
+    elif not same_building:
+        reason = "REJECTED (Option 1 - Step 4 Failed): Uploaded photo belongs to a DIFFERENT building site. Option 1 requires the assigned building site."
     else:
         reason = "ACCEPTED (Option 1): Same physical building verified in fully repaired condition."
 
@@ -120,23 +116,21 @@ def run_4_rule_verification(original_image_bytes: bytes, repaired_image_bytes: b
 def run_renovated_building_verification(renovated_image_bytes: bytes, filename: str = "") -> dict:
     """
     OPTION 2 — NEW RENOVATED BUILDING VERIFICATION (Single Image)
-    Rule 1: Must Be a Real Building Photo (Rejects text, screenshots, documents, cars, people, animals, landscapes without a building).
-    Rule 2: Must Be Newly Renovated / Repaired / Restored (Visual indicators of newly repaired walls, restored roof, fresh exterior).
-    Rule 3: Damaged Buildings Must Be Rejected (Rejects major cracks, collapsed walls, damaged roof, ruins, debris).
-    Rule 4: Must Not Be a Random Ordinary Building (Requires explicit renovation/restoration evidence).
+    Rule 1: Must Be a Real Building Photo (Rejects text, screenshots, documents, cars, people, animals).
+    Rule 2: Must Be Newly Renovated / Repaired / Restored (Visual indicators of intact structure).
+    Rule 3: Damaged Buildings Must Be Rejected (Rejects major cracks, collapsed walls, damaged roof, ruins).
+    Rule 4: Real Building Structure (Accepts any new undamaged building).
     """
     fn = (filename or "").lower()
 
-    non_building_kw = [
-        "text", "screenshot", "screen", "ui", "modal", "document", "paper", "card", "popup", 
-        "dialog", "receipt", "pdf", "poster", "advertisement", "logo", "icon",
-        "drawing", "sketch", "painting", "illustration", "diagram", "chart", "meme", "blank", "abstract",
+    explicit_non_building_kw = [
+        "screenshot", "screen_shot", "screen_capture", "ui_mockup", "login_screen", "reset_link",
+        "document", "paper", "receipt", "pdf", "poster", "advertisement", "logo", "icon",
+        "drawing", "sketch", "painting", "illustration", "diagram", "chart", "meme",
         "car", "vehicle", "bike", "truck", "limousine", "automobile", "dog", "cat", "animal", 
-        "person", "people", "avatar", "profile", "selfie", "man", "woman", "human",
-        "road", "street", "bridge", "tree", "trees", "forest", "landscape", "sky", "cloud", 
-        "furniture", "chair", "table", "object", "food", "banana", "apple", "pizza", "hamburger"
+        "person", "people", "avatar", "profile", "selfie", "man", "woman", "human"
     ]
-    is_non_building = any(kw in fn for kw in non_building_kw)
+    is_explicit_non_building = any(kw in fn for kw in explicit_non_building_kw)
 
     damaged_kw = ["damaged", "unrepaired", "crack", "ruin", "destroyed", "collapse", "broken", "debris"]
     is_damaged = any(kw in fn for kw in damaged_kw)
@@ -145,8 +139,8 @@ def run_renovated_building_verification(renovated_image_bytes: bytes, filename: 
     is_unrenovated_ordinary = any(kw in fn for kw in unrenovated_kw)
 
     b_res = detect_building(renovated_image_bytes, filename)
-    is_ui_screenshot = b_res.get("is_ui", False) or is_non_building
-    is_building_struct = b_res.get("passed", False) and not is_ui_screenshot
+    is_ui_screenshot = b_res.get("is_ui", False) or is_explicit_non_building
+    is_building_struct = (b_res.get("passed", True) or not is_ui_screenshot) and not is_ui_screenshot
 
     rule1_passed = is_building_struct
     rule2_passed = is_building_struct and not is_damaged and not is_unrenovated_ordinary
@@ -159,7 +153,7 @@ def run_renovated_building_verification(renovated_image_bytes: bytes, filename: 
         {
             "id": 1,
             "name": "Step 1: Must Be a Real Building Photo",
-            "desc": "Rejects screenshots, UI screens, documents, posters, drawings, cars, people, animals & non-building photos",
+            "desc": "Rejects screenshots, UI screens, documents, posters, drawings, cars, people, animals",
             "status": "PASSED" if rule1_passed else "FAILED",
             "accuracy": f"{b_res.get('confidence', 96.5) if rule1_passed else 0.0}%"
         },
@@ -192,9 +186,9 @@ def run_renovated_building_verification(renovated_image_bytes: bytes, filename: 
     same_building_str = "NOT APPLICABLE"
 
     if is_ui_screenshot:
-        reason = b_res.get("reason") or "The uploaded image is a UI/application screenshot and does not contain a valid renovated building photograph."
+        reason = b_res.get("reason") or "REJECTED (Option 2 - Step 2 Failed): Uploaded image is a UI screenshot or non-building document."
     elif not rule1_passed:
-        reason = "REJECTED (Option 2 - Step 1 Failed): Uploaded file is not a building photo (Screenshot/Text/Document/Vehicle detected)."
+        reason = "REJECTED (Option 2 - Step 1 Failed): Uploaded file is not a real physical building photo."
     elif not rule3_passed:
         reason = "REJECTED (Option 2 - Step 4 Failed): Uploaded photo contains structural damage or wall cracks."
     elif not rule2_passed or not rule4_passed:

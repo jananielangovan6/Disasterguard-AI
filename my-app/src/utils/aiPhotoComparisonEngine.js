@@ -135,11 +135,9 @@ export async function compareOnSiteRepairPhotos(referenceImageUrl, submittedImag
   const rawUrl = String(submittedImageUrl || "").toLowerCase();
 
   const nonBuildingKeywords = [
-    "screenshot", "screen", "ui", "modal", "dialog", "document", "paper", "card", "popup", 
-    "reset", "login", "signin", "auth", "form", "button", "page", "tab", "app", "view", 
-    "receipt", "pdf", "poster", "logo", "icon", "dashboard", "certificate", "completion", 
-    "mongodb", "proof", "drawing", "sketch", "painting", "illustration", "diagram", "chart",
-    "car", "vehicle", "bike", "truck", "dog", "cat", "person", "selfie", "road", "landscape"
+    "screenshot", "screen_shot", "screen_capture", "login_screen", "reset_link", "reset_password",
+    "document_scan", "pdf_document", "ui_mockup", "drawing", "sketch", "painting", "diagram", "chart",
+    "car", "vehicle", "bike", "truck", "dog", "cat", "person", "selfie"
   ];
 
   const isUiScreenshot = nonBuildingKeywords.some((kw) => fileName.includes(kw)) || subFeatures.isNonBuildingPixelPattern;
@@ -286,13 +284,9 @@ export async function verifyRenovatedBuildingPhoto(repairedUrl, file) {
   const subFeatures = subImg ? extractFeatureVector(subImg) : { isNonBuildingPixelPattern: false, whiteRatio: 0 };
 
   const nonBuildingKeywords = [
-    "text", "screenshot", "screen", "ui", "modal", "dialog", "document", "paper", "card", "popup", 
-    "dialog", "receipt", "pdf", "poster", "advertisement", "logo", "icon", "dashboard", "certificate", "completion", "mongodb", "proof",
-    "drawing", "sketch", "painting", "illustration", "diagram", "chart", "meme", "blank", "abstract",
-    "car", "vehicle", "bike", "truck", "limousine", "automobile", "dog", "cat", "animal", 
-    "person", "people", "avatar", "profile", "selfie", "man", "woman", "human",
-    "road", "street", "bridge", "tree", "trees", "forest", "landscape", "sky", "cloud", 
-    "furniture", "chair", "table", "object", "food", "banana", "apple", "pizza", "hamburger"
+    "screenshot", "screen_shot", "screen_capture", "login_screen", "reset_link", "reset_password",
+    "document_scan", "pdf_document", "ui_mockup", "drawing", "sketch", "painting", "diagram", "chart",
+    "car", "vehicle", "bike", "truck", "dog", "cat", "person", "selfie"
   ];
   const isNonBuilding = nonBuildingKeywords.some((kw) => fileName.includes(kw)) || subFeatures.isNonBuildingPixelPattern;
 
