@@ -280,6 +280,27 @@ export const USERS = [
     emergencyContactPhone: "+91 91760 66778",
     profileCompleted: true,
   },
+  {
+    id: 'u9',
+    employeeId: "DG-009",
+    name: "Sala E",
+    email: "sala@disasterguard.org",
+    personalEmail: "sala.e@gmail.com",
+    phone: "+91 98402 34567",
+    role: "Field Inspector",
+    status: "ACTIVE",
+    password: "demo123",
+    gender: "Female",
+    dob: "1995-04-12",
+    address: "No. 15, Avinashi Road, Coimbatore - 641018",
+    designation: "Field Inspector",
+    experience: "6 Years",
+    qualification: "B.E. Civil Engineering",
+    zone: "Zone A",
+    emergencyContactName: "Eswaran M (Father)",
+    emergencyContactPhone: "+91 98400 99887",
+    profileCompleted: true,
+  },
 ];
 
 export function getStoredUsers() {
@@ -288,7 +309,13 @@ export function getStoredUsers() {
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const merged = [...parsed];
+        const merged = parsed.map((u) => {
+          const uEmail = (u.email || u.officialEmail || "").toLowerCase();
+          if (uEmail.includes("sala") || uEmail.includes("janani") || uEmail.includes("dhiyana")) {
+            return { ...u, role: "Field Inspector" };
+          }
+          return u;
+        });
         USERS.forEach((defaultUser) => {
           const exists = merged.some(
             (u) => u.email?.toLowerCase() === defaultUser.email.toLowerCase() || u.id === defaultUser.id

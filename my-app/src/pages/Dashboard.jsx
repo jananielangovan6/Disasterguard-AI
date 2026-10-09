@@ -14,6 +14,18 @@ export default function Dashboard() {
     return <CitizenDashboard />;
   }
   if (
+    r1 === "FIELD_INSPECTOR" ||
+    r2 === "FIELD_INSPECTOR" ||
+    r1 === "FIELD INSPECTOR" ||
+    r2 === "FIELD INSPECTOR" ||
+    r1.includes("INSPECTOR") ||
+    r2.includes("INSPECTOR") ||
+    r1.includes("FIELD") ||
+    r2.includes("FIELD")
+  ) {
+    return <FieldInspectorDashboard />;
+  }
+  if (
     r1 === "ENGINEER" ||
     r2 === "ENGINEER" ||
     r1.includes("ENGINEER") ||

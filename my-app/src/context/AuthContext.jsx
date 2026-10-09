@@ -69,7 +69,7 @@ export function AuthProvider({ children }) {
       }
       let autoRole = "Engineer";
       if (cleanEmail.includes("admin") || cleanEmail.includes("authority") || cleanEmail.includes("hq")) autoRole = "Authority";
-      else if (cleanEmail.includes("inspector") || cleanEmail.includes("field") || cleanEmail.includes("janani") || cleanEmail.includes("dhiyana")) autoRole = "Field Inspector";
+      else if (cleanEmail.includes("inspector") || cleanEmail.includes("field") || cleanEmail.includes("janani") || cleanEmail.includes("dhiyana") || cleanEmail.includes("sala")) autoRole = "Field Inspector";
 
       const formattedName = handlePrefix.charAt(0).toUpperCase() + handlePrefix.slice(1);
       localMatch = {
@@ -137,6 +137,7 @@ export function AuthProvider({ children }) {
       } else if (
         cleanEmail.includes("janani") ||
         cleanEmail.includes("dhiyana") ||
+        cleanEmail.includes("sala") ||
         cleanEmail.includes("inspector") ||
         cleanEmail.includes("field") ||
         cleanEmail.startsWith("inspector@")

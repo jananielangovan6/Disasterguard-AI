@@ -41,6 +41,8 @@ const HARDCODED_STAFF_ROLES = {
   "meena@disasterguard.org": "Engineer",
   "janani@disasterguard.org": "Field Inspector",
   "dhiyana@disasterguard.org": "Field Inspector",
+  "sala@disasterguard.org": "Field Inspector",
+  "sala": "Field Inspector",
 };
 
 export default function Login() {
@@ -157,6 +159,7 @@ export default function Login() {
     } else if (
       trimmed.includes("janani") ||
       trimmed.includes("dhiyana") ||
+      trimmed.includes("sala") ||
       trimmed.includes("inspector") ||
       trimmed.includes("field") ||
       trimmed.startsWith("inspector@")
